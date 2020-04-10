@@ -50,7 +50,7 @@ PHY_QueryBBReg8814A(
 	BitShift = PHY_CalculateBitShift(BitMask);
 	ReturnValue = (OriginalValue & BitMask) >> BitShift;
 
-	//DBG_871X("BBR MASK=0x%x Addr[0x%x]=0x%x\n", BitMask, RegAddr, OriginalValue);
+	//RTW_INFO("BBR MASK=0x%x Addr[0x%x]=0x%x\n", BitMask, RegAddr, OriginalValue);
 
 	return (ReturnValue);
 }
@@ -84,7 +84,7 @@ PHY_SetBBReg8814A(
 
 	rtw_write32(Adapter, RegAddr, Data);
 	
-	//DBG_871X("BBW MASK=0x%x Addr[0x%x]=0x%x\n", BitMask, RegAddr, Data);
+	//RTW_INFO("BBW MASK=0x%x Addr[0x%x]=0x%x\n", BitMask, RegAddr, Data);
 }
 
 
@@ -102,16 +102,16 @@ phy_RFRead_8814A(
 	
 	RegAddr &= 0xff;
 	switch(eRFPath){
-		case ODM_RF_PATH_A:
+		case RF_PATH_A:
 			Direct_Addr = 0x2800+RegAddr*4;
 		break;
-		case ODM_RF_PATH_B:
+		case RF_PATH_B:
 			Direct_Addr = 0x2c00+RegAddr*4;
 		break;
-		case ODM_RF_PATH_C:
+		case RF_PATH_C:
 			Direct_Addr = 0x3800+RegAddr*4;
 		break;
-		case ODM_RF_PATH_D:
+		case RF_PATH_D:
 			Direct_Addr = 0x3c00+RegAddr*4;
 		break;
 		default: //pathA
@@ -122,8 +122,8 @@ phy_RFRead_8814A(
 
 	BitMask &= bRFRegOffsetMask;
 	
-	Readback_Value = PHY_QueryBBReg(Adapter, Direct_Addr, BitMask);		
-	//DBG_871X("RFR-%d Addr[0x%x]=0x%x\n", eRFPath, RegAddr, Readback_Value);
+	Readback_Value = phy_query_bb_reg(Adapter, Direct_Addr, BitMask);		
+	//RTW_INFO("RFR-%d Addr[0x%x]=0x%x\n", eRFPath, RegAddr, Readback_Value);
 
 	return Readback_Value;
 }
@@ -157,15 +157,15 @@ phy_RFWrite_8814A(
 	DataAndAddr = ((Offset<<20) | (Data&0x000fffff)) & 0x0fffffff;	
 
 	// Write Operation 
-	PHY_SetBBReg(Adapter, pPhyReg->rf3wireOffset, bMaskDWord, DataAndAddr);
-	//DBG_871X("RFW-%d Addr[0x%x]=0x%x\n", eRFPath, pPhyReg->rf3wireOffset, DataAndAddr);
+	phy_set_bb_reg(Adapter, pPhyReg->rf3wireOffset, bMaskDWord, DataAndAddr);
+	//RTW_INFO("RFW-%d Addr[0x%x]=0x%x\n", eRFPath, pPhyReg->rf3wireOffset, DataAndAddr);
 }
 
 
 u32
 PHY_QueryRFReg8814A(
 	IN	PADAPTER			Adapter,
-	IN	u8				eRFPath,
+	IN	enum rf_path				eRFPath,
 	IN	u32				RegAddr,
 	IN	u32				BitMask
 	)
@@ -185,7 +185,7 @@ PHY_QueryRFReg8814A(
 VOID
 PHY_SetRFReg8814A(
 	IN	PADAPTER			Adapter,
-	IN	u8				eRFPath,
+	IN	enum rf_path				eRFPath,
 	IN	u32				RegAddr,
 	IN	u32				BitMask,
 	IN	u32				Data
@@ -222,22 +222,17 @@ s32 PHY_MACConfig8814(PADAPTER Adapter)
 {
 	int				rtStatus = _FAIL;
 	HAL_DATA_TYPE	*pHalData = GET_HAL_DATA(Adapter);
-	s8				*pszMACRegFile;
-	s8				sz8814MACRegFile[] = RTL8814A_PHY_MACREG;
-
-	pszMACRegFile = sz8814MACRegFile;
-
 
 	//
 	// Config MAC
 	//
 #ifdef CONFIG_LOAD_PHY_PARA_FROM_FILE
-	rtStatus = phy_ConfigMACWithParaFile(Adapter, pszMACRegFile);
+	rtStatus = phy_ConfigMACWithParaFile(Adapter, PHY_FILE_MAC_REG);
 	if (rtStatus == _FAIL)
 #endif //CONFIG_LOAD_PHY_PARA_FROM_FILE
 	{
 #ifdef CONFIG_EMBEDDED_FWIMG
-		ODM_ConfigMACWithHeaderFile(&pHalData->odmpriv);
+		odm_config_mac_with_header_file(&pHalData->odmpriv);
 		rtStatus = _SUCCESS;
 #endif//CONFIG_EMBEDDED_FWIMG
 	}
@@ -254,67 +249,67 @@ phy_InitBBRFRegisterDefinition(
 	HAL_DATA_TYPE		*pHalData = GET_HAL_DATA(Adapter);	
 
 	// RF Interface Sowrtware Control
-	pHalData->PHYRegDef[ODM_RF_PATH_A].rfintfs = rFPGA0_XAB_RFInterfaceSW; // 16 LSBs if read 32-bit from 0x870
-	pHalData->PHYRegDef[ODM_RF_PATH_B].rfintfs = rFPGA0_XAB_RFInterfaceSW; // 16 MSBs if read 32-bit from 0x870 (16-bit for 0x872)
+	pHalData->PHYRegDef[RF_PATH_A].rfintfs = rFPGA0_XAB_RFInterfaceSW; // 16 LSBs if read 32-bit from 0x870
+	pHalData->PHYRegDef[RF_PATH_B].rfintfs = rFPGA0_XAB_RFInterfaceSW; // 16 MSBs if read 32-bit from 0x870 (16-bit for 0x872)
 
 	// RF Interface Output (and Enable)
-	pHalData->PHYRegDef[ODM_RF_PATH_A].rfintfo = rFPGA0_XA_RFInterfaceOE; // 16 LSBs if read 32-bit from 0x860
-	pHalData->PHYRegDef[ODM_RF_PATH_B].rfintfo = rFPGA0_XB_RFInterfaceOE; // 16 LSBs if read 32-bit from 0x864
+	pHalData->PHYRegDef[RF_PATH_A].rfintfo = rFPGA0_XA_RFInterfaceOE; // 16 LSBs if read 32-bit from 0x860
+	pHalData->PHYRegDef[RF_PATH_B].rfintfo = rFPGA0_XB_RFInterfaceOE; // 16 LSBs if read 32-bit from 0x864
 
 	// RF Interface (Output and)  Enable
-	pHalData->PHYRegDef[ODM_RF_PATH_A].rfintfe = rFPGA0_XA_RFInterfaceOE; // 16 MSBs if read 32-bit from 0x860 (16-bit for 0x862)
-	pHalData->PHYRegDef[ODM_RF_PATH_B].rfintfe = rFPGA0_XB_RFInterfaceOE; // 16 MSBs if read 32-bit from 0x864 (16-bit for 0x866)
+	pHalData->PHYRegDef[RF_PATH_A].rfintfe = rFPGA0_XA_RFInterfaceOE; // 16 MSBs if read 32-bit from 0x860 (16-bit for 0x862)
+	pHalData->PHYRegDef[RF_PATH_B].rfintfe = rFPGA0_XB_RFInterfaceOE; // 16 MSBs if read 32-bit from 0x864 (16-bit for 0x866)
 
 	if(IS_HARDWARE_TYPE_JAGUAR_AND_JAGUAR2(Adapter))
 	{
-		pHalData->PHYRegDef[ODM_RF_PATH_A].rf3wireOffset = rA_LSSIWrite_Jaguar; //LSSI Parameter
-		pHalData->PHYRegDef[ODM_RF_PATH_B].rf3wireOffset = rB_LSSIWrite_Jaguar;
+		pHalData->PHYRegDef[RF_PATH_A].rf3wireOffset = rA_LSSIWrite_Jaguar; //LSSI Parameter
+		pHalData->PHYRegDef[RF_PATH_B].rf3wireOffset = rB_LSSIWrite_Jaguar;
 
-		pHalData->PHYRegDef[ODM_RF_PATH_A].rfHSSIPara2 = rHSSIRead_Jaguar;  //wire control parameter2
-		pHalData->PHYRegDef[ODM_RF_PATH_B].rfHSSIPara2 = rHSSIRead_Jaguar;  //wire control parameter2
+		pHalData->PHYRegDef[RF_PATH_A].rfHSSIPara2 = rHSSIRead_Jaguar;  //wire control parameter2
+		pHalData->PHYRegDef[RF_PATH_B].rfHSSIPara2 = rHSSIRead_Jaguar;  //wire control parameter2
 	}
 	else
 	{
-		pHalData->PHYRegDef[ODM_RF_PATH_A].rf3wireOffset = rFPGA0_XA_LSSIParameter; //LSSI Parameter
-		pHalData->PHYRegDef[ODM_RF_PATH_B].rf3wireOffset = rFPGA0_XB_LSSIParameter;
+		pHalData->PHYRegDef[RF_PATH_A].rf3wireOffset = rFPGA0_XA_LSSIParameter; //LSSI Parameter
+		pHalData->PHYRegDef[RF_PATH_B].rf3wireOffset = rFPGA0_XB_LSSIParameter;
 
-		pHalData->PHYRegDef[ODM_RF_PATH_A].rfHSSIPara2 = rFPGA0_XA_HSSIParameter2;  //wire control parameter2
-		pHalData->PHYRegDef[ODM_RF_PATH_B].rfHSSIPara2 = rFPGA0_XB_HSSIParameter2;  //wire control parameter2
+		pHalData->PHYRegDef[RF_PATH_A].rfHSSIPara2 = rFPGA0_XA_HSSIParameter2;  //wire control parameter2
+		pHalData->PHYRegDef[RF_PATH_B].rfHSSIPara2 = rFPGA0_XB_HSSIParameter2;  //wire control parameter2
 	}
 
 	if(IS_HARDWARE_TYPE_8814A(Adapter))
 	{
-		pHalData->PHYRegDef[ODM_RF_PATH_C].rf3wireOffset = rC_LSSIWrite_Jaguar2; //LSSI Parameter
-		pHalData->PHYRegDef[ODM_RF_PATH_D].rf3wireOffset = rD_LSSIWrite_Jaguar2;
+		pHalData->PHYRegDef[RF_PATH_C].rf3wireOffset = rC_LSSIWrite_Jaguar2; //LSSI Parameter
+		pHalData->PHYRegDef[RF_PATH_D].rf3wireOffset = rD_LSSIWrite_Jaguar2;
 
-		pHalData->PHYRegDef[ODM_RF_PATH_C].rfHSSIPara2 = rHSSIRead_Jaguar;  //wire control parameter2
-		pHalData->PHYRegDef[ODM_RF_PATH_D].rfHSSIPara2 = rHSSIRead_Jaguar;  //wire control parameter2
+		pHalData->PHYRegDef[RF_PATH_C].rfHSSIPara2 = rHSSIRead_Jaguar;  //wire control parameter2
+		pHalData->PHYRegDef[RF_PATH_D].rfHSSIPara2 = rHSSIRead_Jaguar;  //wire control parameter2
 	}
 	
 	if(IS_HARDWARE_TYPE_JAGUAR_AND_JAGUAR2(Adapter))
 	{
 		 // Tranceiver Readback LSSI/HSPI mode 
-		pHalData->PHYRegDef[ODM_RF_PATH_A].rfLSSIReadBack = rA_SIRead_Jaguar;
-		pHalData->PHYRegDef[ODM_RF_PATH_B].rfLSSIReadBack = rB_SIRead_Jaguar;
-		pHalData->PHYRegDef[ODM_RF_PATH_A].rfLSSIReadBackPi = rA_PIRead_Jaguar;
-		pHalData->PHYRegDef[ODM_RF_PATH_B].rfLSSIReadBackPi = rB_PIRead_Jaguar;
+		pHalData->PHYRegDef[RF_PATH_A].rfLSSIReadBack = rA_SIRead_Jaguar;
+		pHalData->PHYRegDef[RF_PATH_B].rfLSSIReadBack = rB_SIRead_Jaguar;
+		pHalData->PHYRegDef[RF_PATH_A].rfLSSIReadBackPi = rA_PIRead_Jaguar;
+		pHalData->PHYRegDef[RF_PATH_B].rfLSSIReadBackPi = rB_PIRead_Jaguar;
 	}
 	else
 	{
 		// Tranceiver Readback LSSI/HSPI mode 
-		pHalData->PHYRegDef[ODM_RF_PATH_A].rfLSSIReadBack = rFPGA0_XA_LSSIReadBack;
-		pHalData->PHYRegDef[ODM_RF_PATH_B].rfLSSIReadBack = rFPGA0_XB_LSSIReadBack;
-		pHalData->PHYRegDef[ODM_RF_PATH_A].rfLSSIReadBackPi = TransceiverA_HSPI_Readback;
-		pHalData->PHYRegDef[ODM_RF_PATH_B].rfLSSIReadBackPi = TransceiverB_HSPI_Readback;
+		pHalData->PHYRegDef[RF_PATH_A].rfLSSIReadBack = rFPGA0_XA_LSSIReadBack;
+		pHalData->PHYRegDef[RF_PATH_B].rfLSSIReadBack = rFPGA0_XB_LSSIReadBack;
+		pHalData->PHYRegDef[RF_PATH_A].rfLSSIReadBackPi = TransceiverA_HSPI_Readback;
+		pHalData->PHYRegDef[RF_PATH_B].rfLSSIReadBackPi = TransceiverB_HSPI_Readback;
 	}
 
 	if(IS_HARDWARE_TYPE_8814A(Adapter))
 	{
 		// Tranceiver Readback LSSI/HSPI mode 
-		pHalData->PHYRegDef[ODM_RF_PATH_C].rfLSSIReadBack = rC_SIRead_Jaguar2;
-		pHalData->PHYRegDef[ODM_RF_PATH_D].rfLSSIReadBack = rD_SIRead_Jaguar2;
-		pHalData->PHYRegDef[ODM_RF_PATH_C].rfLSSIReadBackPi = rC_PIRead_Jaguar2;
-		pHalData->PHYRegDef[ODM_RF_PATH_D].rfLSSIReadBackPi = rD_PIRead_Jaguar2;
+		pHalData->PHYRegDef[RF_PATH_C].rfLSSIReadBack = rC_SIRead_Jaguar2;
+		pHalData->PHYRegDef[RF_PATH_D].rfLSSIReadBack = rD_SIRead_Jaguar2;
+		pHalData->PHYRegDef[RF_PATH_C].rfLSSIReadBackPi = rC_PIRead_Jaguar2;
+		pHalData->PHYRegDef[RF_PATH_D].rfLSSIReadBackPi = rD_PIRead_Jaguar2;
 	}
 
 	//pHalData->bPhyValueInitReady=TRUE;
@@ -358,168 +353,93 @@ PHY_BBConfig8814(
 	//
 	rtStatus = phy_BB8814A_Config_ParaFile(Adapter);
 
-	hal_set_crystal_cap(Adapter, pHalData->CrystalCap);
+	hal_set_crystal_cap(Adapter, pHalData->crystal_cap);
 	
 	switch (Adapter->registrypriv.rf_config) {
 	case RF_1T1R:
 	case RF_2T4R:
 	case RF_3T3R:
 		/*RX CCK disable 2R CCA*/
-		PHY_SetBBReg(Adapter, rCCK0_FalseAlarmReport+2, BIT2|BIT6, 0);
+		phy_set_bb_reg(Adapter, rCCK0_FalseAlarmReport+2, BIT2|BIT6, 0);
 		/*pathB tx on, path A/C/D tx off*/
-		PHY_SetBBReg(Adapter, rCCK_RX_Jaguar, 0xf0000000, 0x4);
+		phy_set_bb_reg(Adapter, rCCK_RX_Jaguar, 0xf0000000, 0x4);
 		/*pathB rx*/
-		PHY_SetBBReg(Adapter, rCCK_RX_Jaguar, 0x0f000000, 0x5);
+		phy_set_bb_reg(Adapter, rCCK_RX_Jaguar, 0x0f000000, 0x5);
 		break;
 	default:
 		/*RX CCK disable 2R CCA*/
-		PHY_SetBBReg(Adapter, rCCK0_FalseAlarmReport+2, BIT2|BIT6, 0);
+		phy_set_bb_reg(Adapter, rCCK0_FalseAlarmReport+2, BIT2|BIT6, 0);
 		/*pathB tx on, path A/C/D tx off*/
-		PHY_SetBBReg(Adapter, rCCK_RX_Jaguar, 0xf0000000, 0x4);
+		phy_set_bb_reg(Adapter, rCCK_RX_Jaguar, 0xf0000000, 0x4);
 		/*pathB rx*/
-		PHY_SetBBReg(Adapter, rCCK_RX_Jaguar, 0x0f000000, 0x5);
-		DBG_871X("%s, unknown rf_config: %d\n", __func__, Adapter->registrypriv.rf_config);
+		phy_set_bb_reg(Adapter, rCCK_RX_Jaguar, 0x0f000000, 0x5);
+		RTW_INFO("%s, unknown rf_config: %d\n", __func__, Adapter->registrypriv.rf_config);
 		break;
 	}
 	
 	return rtStatus;	
 }
 
-s32
-phy_BB8814A_Config_ParaFile(
+int phy_BB8814A_Config_ParaFile(
 	IN	PADAPTER	Adapter
-	)
+)
 {
 	HAL_DATA_TYPE		*pHalData = GET_HAL_DATA(Adapter);
 	int			rtStatus = _SUCCESS;
 
-	s8				sz8814ABBRegFile[] = RTL8814A_PHY_REG;	
-	s8				sz8814AAGCTableFile[] = RTL8814A_AGC_TAB;
-	s8				sz8814ABBRegPgFile[] = RTL8814A_PHY_REG_PG;
-	s8				sz8814RFTxPwrLmtFile[] = RTL8814A_TXPWR_LMT;
-	s8				*pszBBRegFile = NULL, *pszAGCTableFile = NULL, 
-						*pszBBRegPgFile = NULL, *pszRFTxPwrLmtFile = NULL, *pszBBRegMpFile=NULL;
-	
-	//DBG_871X("==>phy_BB8814A_Config_ParaFile\n");
-
-	pszBBRegFile=sz8814ABBRegFile ;
-	pszAGCTableFile =sz8814AAGCTableFile;
-	pszBBRegPgFile = sz8814ABBRegPgFile;
-	pszRFTxPwrLmtFile = sz8814RFTxPwrLmtFile;
-
-	DBG_871X( "EEEPROMRegulatory %d\n", pHalData->EEPROMRegulatory );
-	//RT_TRACE( COMP_INIT, DBG_LOUD, ( "Custom tx power limit file: %s\n", pMgntInfo->RegPwrLimitFile.Octet ) );
-	//RT_TRACE( COMP_INIT, DBG_LOUD, ( "Custom power by rate file: %s\n", pMgntInfo->RegPwrByRateFile.Octet ) );
-
-	//DBG_871X(" ===> phy_BB8814A_Config_ParaFile() phy_reg:%s\n",pszBBRegFile);
-	//DBG_871X(" ===> phy_BB8814A_Config_ParaFile() phy_reg_pg:%s\n",pszBBRegPgFile);
-	//DBG_871X(" ===> phy_BB8814A_Config_ParaFile() agc_table:%s\n",pszAGCTableFile);
-
-
-	// Read Tx Power Limit 
-	PHY_InitTxPowerLimit( Adapter );
-	if ( Adapter->registrypriv.RegEnableTxPowerLimit == 1 || 
-	     ( Adapter->registrypriv.RegEnableTxPowerLimit == 2 && pHalData->EEPROMRegulatory == 1 ) )
-	{
+	/* Read PHY_REG.TXT BB INIT!! */
 #ifdef CONFIG_LOAD_PHY_PARA_FROM_FILE
-		if (PHY_ConfigRFWithPowerLimitTableParaFile( Adapter, pszRFTxPwrLmtFile )== _FAIL)
-#endif
-		{
-#ifdef CONFIG_EMBEDDED_FWIMG
-			if (HAL_STATUS_SUCCESS != ODM_ConfigRFWithHeaderFile(&pHalData->odmpriv, CONFIG_RF_TXPWR_LMT, (ODM_RF_RADIO_PATH_E)0))
-				rtStatus = _FAIL;
-#endif
-		}
-
-		if(rtStatus != _SUCCESS){
-			DBG_871X("%s():Read Tx power limit fail\n",__FUNCTION__	);
-			goto phy_BB_Config_ParaFile_Fail;
-		}
-	}
-
-	// Read PHY_REG.TXT BB INIT!!
-#ifdef CONFIG_LOAD_PHY_PARA_FROM_FILE
-	if (phy_ConfigBBWithParaFile(Adapter, pszBBRegFile, CONFIG_BB_PHY_REG) == _FAIL)
+	if (phy_ConfigBBWithParaFile(Adapter, PHY_FILE_PHY_REG, CONFIG_BB_PHY_REG) == _FAIL)
 #endif
 	{
 #ifdef CONFIG_EMBEDDED_FWIMG
-		if (HAL_STATUS_SUCCESS != ODM_ConfigBBWithHeaderFile(&pHalData->odmpriv, CONFIG_BB_PHY_REG))
+		if (HAL_STATUS_SUCCESS != odm_config_bb_with_header_file(&pHalData->odmpriv, CONFIG_BB_PHY_REG))
 			rtStatus = _FAIL;
 #endif
 	}
 
-	if(rtStatus != _SUCCESS){
-		DBG_871X("%s(): CONFIG_BB_PHY_REG Fail!!\n",__FUNCTION__	);
+	if (rtStatus != _SUCCESS) {
+		RTW_INFO("%s(): CONFIG_BB_PHY_REG Fail!!\n", __FUNCTION__);
 		goto phy_BB_Config_ParaFile_Fail;
 	}
 
-	// Read PHY_REG_MP.TXT BB INIT!!
+	/* Read PHY_REG_MP.TXT BB INIT!! */
 #if (MP_DRIVER == 1)
 	if (Adapter->registrypriv.mp_mode == 1) {
 #ifdef CONFIG_LOAD_PHY_PARA_FROM_FILE
-		if (phy_ConfigBBWithMpParaFile(Adapter, pszBBRegMpFile) == _FAIL)
+		if (phy_ConfigBBWithMpParaFile(Adapter, PHY_FILE_PHY_REG_MP) == _FAIL)
 #endif
 		{
 #ifdef CONFIG_EMBEDDED_FWIMG
-			if (HAL_STATUS_SUCCESS != ODM_ConfigBBWithHeaderFile(&pHalData->odmpriv, CONFIG_BB_PHY_REG_MP))
+			if (HAL_STATUS_SUCCESS != odm_config_bb_with_header_file(&pHalData->odmpriv, CONFIG_BB_PHY_REG_MP))
 				rtStatus = _FAIL;
 #endif
 		}
 
-		if(rtStatus != _SUCCESS){
-			DBG_871X("phy_BB8812_Config_ParaFile():Write BB Reg MP Fail!!\n");
+		if (rtStatus != _SUCCESS) {
+			RTW_INFO("phy_BB8814_Config_ParaFile():Write BB Reg MP Fail!!\n");
 			goto phy_BB_Config_ParaFile_Fail;
 		}
 	}
-#endif	// #if (MP_DRIVER == 1)
+#endif	/*  #if (MP_DRIVER == 1) */
 
-	// If EEPROM or EFUSE autoload OK, We must config by PHY_REG_PG.txt
-	PHY_InitTxPowerByRate( Adapter );
-	if ( Adapter->registrypriv.RegEnableTxPowerByRate == 1 || 
-	     ( Adapter->registrypriv.RegEnableTxPowerByRate == 2 && pHalData->EEPROMRegulatory != 2 ) )
-	{
+	/* BB AGC table Initialization */
 #ifdef CONFIG_LOAD_PHY_PARA_FROM_FILE
-		if (phy_ConfigBBWithPgParaFile(Adapter, pszBBRegPgFile) == _FAIL)
-#endif
-		{
-#ifdef CONFIG_EMBEDDED_FWIMG
-			if (HAL_STATUS_SUCCESS != ODM_ConfigBBWithHeaderFile(&pHalData->odmpriv, CONFIG_BB_PHY_REG_PG))
-				rtStatus = _FAIL;
-#endif
-		}
-
-		if ( pHalData->odmpriv.PhyRegPgValueType == PHY_REG_PG_EXACT_VALUE )
-			PHY_TxPowerByRateConfiguration( Adapter );
-
-		if ( Adapter->registrypriv.RegEnableTxPowerLimit == 1 || 
-	         ( Adapter->registrypriv.RegEnableTxPowerLimit == 2 && pHalData->EEPROMRegulatory == 1 ) )
-			PHY_ConvertTxPowerLimitToPowerIndex( Adapter );
-
-		if(rtStatus != _SUCCESS){
-			DBG_871X("%s(): CONFIG_BB_PHY_REG_PG Fail!!\n",__FUNCTION__	);
-			goto phy_BB_Config_ParaFile_Fail;
-		}
-	}
-
-	// BB AGC table Initialization
-#ifdef CONFIG_LOAD_PHY_PARA_FROM_FILE
-	if (phy_ConfigBBWithParaFile(Adapter, pszAGCTableFile, CONFIG_BB_AGC_TAB) == _FAIL)
+	if (phy_ConfigBBWithParaFile(Adapter, PHY_FILE_AGC_TAB, CONFIG_BB_AGC_TAB) == _FAIL)
 #endif
 	{
 #ifdef CONFIG_EMBEDDED_FWIMG
-		if (HAL_STATUS_SUCCESS != ODM_ConfigBBWithHeaderFile(&pHalData->odmpriv, CONFIG_BB_AGC_TAB))
+		if (HAL_STATUS_SUCCESS != odm_config_bb_with_header_file(&pHalData->odmpriv, CONFIG_BB_AGC_TAB))
 			rtStatus = _FAIL;
 #endif
 	}
 
-	if(rtStatus != _SUCCESS){
-		DBG_871X("%s(): CONFIG_BB_AGC_TAB Fail!!\n",__FUNCTION__	);
-	}
+	if (rtStatus != _SUCCESS)
+		RTW_INFO("%s(): CONFIG_BB_AGC_TAB Fail!!\n", __FUNCTION__);
 
 phy_BB_Config_ParaFile_Fail:
 
 	return rtStatus;
-
 }
 
 
@@ -533,28 +453,28 @@ phy_ADC_CLK_8814A(
 	u32			Search_index = 0, MAC_Active = 1;
 	u32			RXIQC_REG[2][4] = {{0xc10, 0xe10, 0x1810, 0x1a10}, {0xc14, 0xe14, 0x1814, 0x1a14}} ;
 
-	if (GET_CVID_CUT_VERSION(pHalData->VersionID) != A_CUT_VERSION)
+	if (GET_CVID_CUT_VERSION(pHalData->version_id) != A_CUT_VERSION)
 		return;
 
 //1 Step1. MAC TX pause
-	MAC_REG_520 = PHY_QueryBBReg( Adapter, 0x520, bMaskDWord);
-	BB_REG_8FC = PHY_QueryBBReg( Adapter, 0x8fc, bMaskDWord);
-	BB_REG_808 = PHY_QueryBBReg( Adapter, 0x808, bMaskDWord);
-	PHY_SetBBReg(Adapter, 0x520, bMaskByte2, 0x3f);
+	MAC_REG_520 = phy_query_bb_reg( Adapter, 0x520, bMaskDWord);
+	BB_REG_8FC = phy_query_bb_reg( Adapter, 0x8fc, bMaskDWord);
+	BB_REG_808 = phy_query_bb_reg( Adapter, 0x808, bMaskDWord);
+	phy_set_bb_reg(Adapter, 0x520, bMaskByte2, 0x3f);
 	
 //1 Step 2. Backup RXIQC & RXIQC = 0
 	for(Search_index = 0; Search_index<4; Search_index++){
-		RXIQC[Search_index] = PHY_QueryBBReg( Adapter, RXIQC_REG[0][Search_index], bMaskDWord);
-		PHY_SetBBReg(Adapter, RXIQC_REG[0][Search_index], bMaskDWord, 0x0);
-		PHY_SetBBReg(Adapter, RXIQC_REG[1][Search_index], bMaskDWord, 0x0);
+		RXIQC[Search_index] = phy_query_bb_reg( Adapter, RXIQC_REG[0][Search_index], bMaskDWord);
+		phy_set_bb_reg(Adapter, RXIQC_REG[0][Search_index], bMaskDWord, 0x0);
+		phy_set_bb_reg(Adapter, RXIQC_REG[1][Search_index], bMaskDWord, 0x0);
 	}
-	PHY_SetBBReg(Adapter, 0xa14, 0x00000300, 0x3);
+	phy_set_bb_reg(Adapter, 0xa14, 0x00000300, 0x3);
 	Search_index = 0;
 	
 //1 Step 3. Monitor MAC IDLE
-	PHY_SetBBReg(Adapter, 0x8fc, bMaskDWord, 0x0);
+	phy_set_bb_reg(Adapter, 0x8fc, bMaskDWord, 0x0);
 	while(MAC_Active){
-		MAC_Active = PHY_QueryBBReg( Adapter, 0xfa0, bMaskDWord) & (0x803e0008);
+		MAC_Active = phy_query_bb_reg( Adapter, 0xfa0, bMaskDWord) & (0x803e0008);
 		Search_index++;
 		if(Search_index>1000){
 			break;
@@ -562,75 +482,75 @@ phy_ADC_CLK_8814A(
 	}
 
 //1 Step 4. ADC clk flow
-	PHY_SetBBReg(Adapter, 0x808, bMaskByte0, 0x11);
-	PHY_SetBBReg(Adapter, 0x90c, BIT(13), 0x1);
-	PHY_SetBBReg(Adapter, 0x764, BIT(10)|BIT(9), 0x3);
-	PHY_SetBBReg(Adapter, 0x804, BIT(2), 0x1);
+	phy_set_bb_reg(Adapter, 0x808, bMaskByte0, 0x11);
+	phy_set_bb_reg(Adapter, 0x90c, BIT(13), 0x1);
+	phy_set_bb_reg(Adapter, 0x764, BIT(10)|BIT(9), 0x3);
+	phy_set_bb_reg(Adapter, 0x804, BIT(2), 0x1);
 
 	// 0xc1c/0xe1c/0x181c/0x1a1c[4] must=1 to ensure table can be written when bbrstb=0         
 	// 0xc60/0xe60/0x1860/0x1a60[15] always = 1 after this line              
 	// 0xc60/0xe60/0x1860/0x1a60[14] always = 0 bcz its error in A-cut          
 
 	// power_off/clk_off @ anapar_state=idle mode
-	PHY_SetBBReg(Adapter, 0xc60, bMaskDWord, 0x15800002);	//0xc60       0x15808002    
-	PHY_SetBBReg(Adapter, 0xc60, bMaskDWord, 0x01808003);	//0xc60       0x01808003
-	PHY_SetBBReg(Adapter, 0xe60, bMaskDWord, 0x15800002);	//0xe60      0x15808002    
-	PHY_SetBBReg(Adapter, 0xe60, bMaskDWord, 0x01808003);	//0xe60      0x01808003    
-	PHY_SetBBReg(Adapter, 0x1860, bMaskDWord, 0x15800002);	//0x1860    0x15808002    
-	PHY_SetBBReg(Adapter, 0x1860, bMaskDWord, 0x01808003);	//0x1860    0x01808003    
-	PHY_SetBBReg(Adapter, 0x1a60, bMaskDWord, 0x15800002);	//0x1a60    0x15808002        
-	PHY_SetBBReg(Adapter, 0x1a60, bMaskDWord, 0x01808003);	//0x1a60    0x01808003     
+	phy_set_bb_reg(Adapter, 0xc60, bMaskDWord, 0x15800002);	//0xc60       0x15808002    
+	phy_set_bb_reg(Adapter, 0xc60, bMaskDWord, 0x01808003);	//0xc60       0x01808003
+	phy_set_bb_reg(Adapter, 0xe60, bMaskDWord, 0x15800002);	//0xe60      0x15808002    
+	phy_set_bb_reg(Adapter, 0xe60, bMaskDWord, 0x01808003);	//0xe60      0x01808003    
+	phy_set_bb_reg(Adapter, 0x1860, bMaskDWord, 0x15800002);	//0x1860    0x15808002    
+	phy_set_bb_reg(Adapter, 0x1860, bMaskDWord, 0x01808003);	//0x1860    0x01808003    
+	phy_set_bb_reg(Adapter, 0x1a60, bMaskDWord, 0x15800002);	//0x1a60    0x15808002        
+	phy_set_bb_reg(Adapter, 0x1a60, bMaskDWord, 0x01808003);	//0x1a60    0x01808003     
  
-	PHY_SetBBReg(Adapter, 0x764, BIT(10), 0x0);
-	PHY_SetBBReg(Adapter, 0x804, BIT(2), 0x0);
-	PHY_SetBBReg(Adapter, 0xc5c, bMaskDWord,  0x0D080058);	//0xc5c       0x00080058  // [19] =1 to turn off ADC  
-	PHY_SetBBReg(Adapter, 0xe5c, bMaskDWord,  0x0D080058);	//0xe5c       0x00080058  // [19] =1 to turn off ADC     
-	PHY_SetBBReg(Adapter, 0x185c, bMaskDWord,  0x0D080058);	//0x185c     0x00080058 // [19] =1 to turn off ADC    
-	PHY_SetBBReg(Adapter, 0x1a5c, bMaskDWord,  0x0D080058);	//0x1a5c     0x00080058 // [19] =1 to turn off ADC       
+	phy_set_bb_reg(Adapter, 0x764, BIT(10), 0x0);
+	phy_set_bb_reg(Adapter, 0x804, BIT(2), 0x0);
+	phy_set_bb_reg(Adapter, 0xc5c, bMaskDWord,  0x0D080058);	//0xc5c       0x00080058  // [19] =1 to turn off ADC  
+	phy_set_bb_reg(Adapter, 0xe5c, bMaskDWord,  0x0D080058);	//0xe5c       0x00080058  // [19] =1 to turn off ADC     
+	phy_set_bb_reg(Adapter, 0x185c, bMaskDWord,  0x0D080058);	//0x185c     0x00080058 // [19] =1 to turn off ADC    
+	phy_set_bb_reg(Adapter, 0x1a5c, bMaskDWord,  0x0D080058);	//0x1a5c     0x00080058 // [19] =1 to turn off ADC       
  
 	// power_on/clk_off 
-	//PHY_SetBBReg(Adapter, 0x764, BIT(10), 0x1);
-	PHY_SetBBReg(Adapter, 0xc5c, bMaskDWord,  0x0D000058);	//0xc5c       0x0D000058   // [19] =0 to turn on ADC    
-	PHY_SetBBReg(Adapter, 0xe5c, bMaskDWord,  0x0D000058);	//0xe5c       0x0D000058  // [19] =0 to turn on ADC     
-	PHY_SetBBReg(Adapter, 0x185c, bMaskDWord,  0x0D000058);	//0x185c     0x0D000058  // [19] =0 to turn on ADC     
-	PHY_SetBBReg(Adapter, 0x1a5c, bMaskDWord,  0x0D000058);	//0x1a5c     0x0D000058 // [19] =0 to turn on ADC       
+	//phy_set_bb_reg(Adapter, 0x764, BIT(10), 0x1);
+	phy_set_bb_reg(Adapter, 0xc5c, bMaskDWord,  0x0D000058);	//0xc5c       0x0D000058   // [19] =0 to turn on ADC    
+	phy_set_bb_reg(Adapter, 0xe5c, bMaskDWord,  0x0D000058);	//0xe5c       0x0D000058  // [19] =0 to turn on ADC     
+	phy_set_bb_reg(Adapter, 0x185c, bMaskDWord,  0x0D000058);	//0x185c     0x0D000058  // [19] =0 to turn on ADC     
+	phy_set_bb_reg(Adapter, 0x1a5c, bMaskDWord,  0x0D000058);	//0x1a5c     0x0D000058 // [19] =0 to turn on ADC       
 
 	// power_on/clk_on @ anapar_state=BT mode
-	PHY_SetBBReg(Adapter, 0xc60, bMaskDWord, 0x05808032);	//0xc60 0x05808002 
-	PHY_SetBBReg(Adapter, 0xe60, bMaskDWord, 0x05808032);	//0xe60 0x05808002           
-	PHY_SetBBReg(Adapter, 0x1860, bMaskDWord, 0x05808032);	//0x1860 0x05808002    
-	PHY_SetBBReg(Adapter, 0x1a60, bMaskDWord, 0x05808032);	//0x1a60 0x05808002            
-       PHY_SetBBReg(Adapter, 0x764, BIT(10), 0x1);
-	PHY_SetBBReg(Adapter, 0x804, BIT(2), 0x1);
+	phy_set_bb_reg(Adapter, 0xc60, bMaskDWord, 0x05808032);	//0xc60 0x05808002 
+	phy_set_bb_reg(Adapter, 0xe60, bMaskDWord, 0x05808032);	//0xe60 0x05808002           
+	phy_set_bb_reg(Adapter, 0x1860, bMaskDWord, 0x05808032);	//0x1860 0x05808002    
+	phy_set_bb_reg(Adapter, 0x1a60, bMaskDWord, 0x05808032);	//0x1a60 0x05808002            
+       phy_set_bb_reg(Adapter, 0x764, BIT(10), 0x1);
+	phy_set_bb_reg(Adapter, 0x804, BIT(2), 0x1);
 
 	// recover original setting @ anapar_state=BT mode                              
-	PHY_SetBBReg(Adapter, 0xc60, bMaskDWord, 0x05808032);	//0xc60       0x05808036    
-	PHY_SetBBReg(Adapter, 0xe60, bMaskDWord, 0x05808032);	//0xe60      0x05808036    
-	PHY_SetBBReg(Adapter, 0x1860, bMaskDWord, 0x05808032);	//0x1860    0x05808036    
-	PHY_SetBBReg(Adapter, 0x1a60, bMaskDWord, 0x05808032);	//0x1a60    0x05808036        
+	phy_set_bb_reg(Adapter, 0xc60, bMaskDWord, 0x05808032);	//0xc60       0x05808036    
+	phy_set_bb_reg(Adapter, 0xe60, bMaskDWord, 0x05808032);	//0xe60      0x05808036    
+	phy_set_bb_reg(Adapter, 0x1860, bMaskDWord, 0x05808032);	//0x1860    0x05808036    
+	phy_set_bb_reg(Adapter, 0x1a60, bMaskDWord, 0x05808032);	//0x1a60    0x05808036        
 
-	PHY_SetBBReg(Adapter, 0xc60, bMaskDWord, 0x05800002);	//0xc60       0x05800002    
-	PHY_SetBBReg(Adapter, 0xc60, bMaskDWord, 0x07808003);	//0xc60       0x07808003
-	PHY_SetBBReg(Adapter, 0xe60, bMaskDWord, 0x05800002);	//0xe60      0x05800002    
-	PHY_SetBBReg(Adapter, 0xe60, bMaskDWord, 0x07808003);	//0xe60      0x07808003    
-	PHY_SetBBReg(Adapter, 0x1860, bMaskDWord, 0x05800002);	//0x1860    0x05800002    
-	PHY_SetBBReg(Adapter, 0x1860, bMaskDWord, 0x07808003);	//0x1860    0x07808003    
-	PHY_SetBBReg(Adapter, 0x1a60, bMaskDWord, 0x05800002);	//0x1a60    0x05800002        
-	PHY_SetBBReg(Adapter, 0x1a60, bMaskDWord, 0x07808003);	//0x1a60    0x07808003     
+	phy_set_bb_reg(Adapter, 0xc60, bMaskDWord, 0x05800002);	//0xc60       0x05800002    
+	phy_set_bb_reg(Adapter, 0xc60, bMaskDWord, 0x07808003);	//0xc60       0x07808003
+	phy_set_bb_reg(Adapter, 0xe60, bMaskDWord, 0x05800002);	//0xe60      0x05800002    
+	phy_set_bb_reg(Adapter, 0xe60, bMaskDWord, 0x07808003);	//0xe60      0x07808003    
+	phy_set_bb_reg(Adapter, 0x1860, bMaskDWord, 0x05800002);	//0x1860    0x05800002    
+	phy_set_bb_reg(Adapter, 0x1860, bMaskDWord, 0x07808003);	//0x1860    0x07808003    
+	phy_set_bb_reg(Adapter, 0x1a60, bMaskDWord, 0x05800002);	//0x1a60    0x05800002        
+	phy_set_bb_reg(Adapter, 0x1a60, bMaskDWord, 0x07808003);	//0x1a60    0x07808003     
 
-	PHY_SetBBReg(Adapter, 0x764, BIT(10)|BIT(9), 0x0);
-	PHY_SetBBReg(Adapter, 0x804, BIT(2), 0x0);
-	PHY_SetBBReg(Adapter, 0x90c, BIT(13), 0x0);
+	phy_set_bb_reg(Adapter, 0x764, BIT(10)|BIT(9), 0x0);
+	phy_set_bb_reg(Adapter, 0x804, BIT(2), 0x0);
+	phy_set_bb_reg(Adapter, 0x90c, BIT(13), 0x0);
 
 //1 Step 5. Recover MAC TX & IQC
-	PHY_SetBBReg(Adapter, 0x520, bMaskDWord, MAC_REG_520);
-	PHY_SetBBReg(Adapter, 0x8fc, bMaskDWord, BB_REG_8FC);
-	PHY_SetBBReg(Adapter, 0x808, bMaskDWord, BB_REG_808);
+	phy_set_bb_reg(Adapter, 0x520, bMaskDWord, MAC_REG_520);
+	phy_set_bb_reg(Adapter, 0x8fc, bMaskDWord, BB_REG_8FC);
+	phy_set_bb_reg(Adapter, 0x808, bMaskDWord, BB_REG_808);
 	for(Search_index = 0; Search_index<4; Search_index++){
-		PHY_SetBBReg(Adapter, RXIQC_REG[0][Search_index], bMaskDWord, RXIQC[Search_index]);
-		PHY_SetBBReg(Adapter, RXIQC_REG[1][Search_index], bMaskDWord, 0x01000000);
+		phy_set_bb_reg(Adapter, RXIQC_REG[0][Search_index], bMaskDWord, RXIQC[Search_index]);
+		phy_set_bb_reg(Adapter, RXIQC_REG[1][Search_index], bMaskDWord, 0x01000000);
 	}
-	PHY_SetBBReg(Adapter, 0xa14, 0x00000300, 0x0);
+	phy_set_bb_reg(Adapter, 0xa14, 0x00000300, 0x0);
 }
 
 VOID
@@ -641,8 +561,8 @@ PHY_ConfigBB_8814A(
 
 	HAL_DATA_TYPE		*pHalData = GET_HAL_DATA(Adapter);
 
-	RT_TRACE(COMP_INIT, DBG_LOUD, (" ===> PHY_ConfigBB_8814A() \n"));
-	PHY_SetBBReg(Adapter, rOFDMCCKEN_Jaguar, bOFDMEN_Jaguar|bCCKEN_Jaguar, 0x3);
+	RTW_DBG(" ===> PHY_ConfigBB_8814A() \n");
+	phy_set_bb_reg(Adapter, rOFDMCCKEN_Jaguar, bOFDMEN_Jaguar|bCCKEN_Jaguar, 0x3);
 }
 
 
@@ -664,7 +584,7 @@ PHY_RFConfig8814A(
 	switch(pHalData->rf_chip)
 	{
 		case RF_PSEUDO_11N:
-			DBG_871X("%s(): RF_PSEUDO_11N\n",__FUNCTION__);
+			RTW_INFO("%s(): RF_PSEUDO_11N\n",__FUNCTION__);
 			break;
 		default: 
 			rtStatus = PHY_RF6052_Config_8814A(Adapter);
@@ -673,35 +593,6 @@ PHY_RFConfig8814A(
 
 	return rtStatus;
 }
-
-#if (MP_DRIVER == 1)
-
-RT_STATUS PHY_BBConfigMP_8814A(PADAPTER	Adapter)
-{
-
-	HAL_DATA_TYPE		*pHalData = GET_HAL_DATA(Adapter);
- 	RT_STATUS			rtStatus = RT_STATUS_FAILURE;
-	s1Byte				sz8814ABBRegMpFile[] = RTL8814A_PHY_REG_MP;
-	ps1Byte 			pszBBRegMpFile=NULL;
-
-	pszBBRegMpFile = sz8814ABBRegMpFile;
-
-	DBG_871X(" ===> PHY_BBConfigMP_8814A() phy_reg_mp:%s\n",pszBBRegMpFile);
-	
-	//3 Read PHY_REG_MP.TXT BB INIT!!
-//#if	LOAD_PHY_PARA_FROM_HEADER
-#ifdef CONFIG_EMBEDDED_FWIMG
-	ODM_ConfigBBWithHeaderFile(&pHalData->odmpriv, CONFIG_BB_PHY_REG_MP);
-	rtStatus = RT_STATUS_SUCCESS;
-#else
-	rtStatus = phy_ConfigBBWithMpParaFile(Adapter,pszBBRegMpFile);
-#endif
-
-	return rtStatus;
-}
-
-#endif
-
 
 //1 4. RF State setting API
 
@@ -888,7 +779,7 @@ phy_SetRFPowerState_8814U(
 		return FALSE;
 	
 	pHalData->SetRFPowerStateInProgress = TRUE;
-	RT_TRACE(COMP_INIT, DBG_LOUD, ("======> phy_SetRFPowerState_8814U .\n"));
+	RTW_DBG("======> phy_SetRFPowerState_8814U .\n");
 
 	switch( eRFPowerState )
 	{
@@ -1057,10 +948,10 @@ phy_SetRFPowerState_8814Sdio(
 
 			// 2010/08/26 MH Prevent IQK to send out packet.
 			if(pHalData->bIQKInitialized )
-				PHY_IQCalibrate_8814A(Adapter, TRUE);
+				phy_iq_calibrate_8814a(Adapter, TRUE);
 			else
 			{
-				PHY_IQCalibrate_8814A(Adapter,FALSE);
+				phy_iq_calibrate_8814a(Adapter,FALSE);
 				pHalData->bIQKInitialized = _TRUE;
 			}
 			break;
@@ -1203,7 +1094,7 @@ PHY_SetRFPowerState8814A(
 #elif (DEV_BUS_TYPE == RT_SDIO_INTERFACE)
 	bResult = phy_SetRFPowerState_8814Sdio(Adapter, eRFPowerState);
 #endif
-		
+
 	RT_TRACE(COMP_RF, DBG_LOUD, ("<--------- PHY_SetRFPowerState8814(): bResult(%d)\n", bResult));
 
 	return bResult;
@@ -1225,7 +1116,7 @@ phy_TxPwrAdjInPercentage(
 VOID
 PHY_GetTxPowerLevel8814(
 	IN	PADAPTER		Adapter,
-	OUT ps4Byte    		powerlevel
+	OUT s32*    		powerlevel
 	)
 {
 	HAL_DATA_TYPE	*pHalData = GET_HAL_DATA(Adapter);
@@ -1240,6 +1131,12 @@ PHY_GetTxPowerLevel8814(
 	else
 		*powerlevel = TxPwrDbm;
 #endif //0
+/*
+	//PMPT_CONTEXT            pMptCtx = &(Adapter->mppriv.mpt_ctx);
+	//u8 mgn_rate = mpt_to_mgnt_rate(HwRateToMPTRate(Adapter->mppriv.rateidx));
+	*powerlevel=PHY_GetTxPowerIndex8814A(Adapter,RF_PATH_A ,MGN_MCS7, pHalData->current_channel_bw, pHalData->current_channel, NULL);
+	*powerlevel/=2;
+*/
 }
 
 VOID
@@ -1272,10 +1169,10 @@ PHY_SetTxPowerLevel8814(
 						   		{MGN_VHT3SS_MCS4, MGN_VHT3SS_MCS5, MGN_VHT3SS_MCS6, MGN_VHT3SS_MCS7}, 
 						 		{MGN_VHT3SS_MCS8, MGN_VHT3SS_MCS9, 0, 0}};	
 
-	
-	for( path = ODM_RF_PATH_A; path <= ODM_RF_PATH_D; ++path )
+
+	for( path = RF_PATH_A; path <= RF_PATH_D; ++path )
 	{
-			PHY_SetTxPowerLevelByPath(Adapter, Channel, (u8)path);
+			phy_set_tx_power_level_by_path(Adapter, Channel, (u8)path);
 	}
 #if 0 //todo H2C_TXPOWER_INDEX_OFFLOAD ?
 	if(Adapter->MgntInfo.bScanInProgress == FALSE &&  pHalData->RegFWOffload == 2)
@@ -1286,57 +1183,77 @@ PHY_SetTxPowerLevel8814(
 }
 
 /**************************************************************************************************************
- *   Description: 
+ *   Description:
  *       The low-level interface to get the FINAL Tx Power Index , called  by both MP and Normal Driver.
  *
  *                                                                                    <20120830, Kordan>
  **************************************************************************************************************/
 u8
-PHY_GetTxPowerIndex_8814A(
-	IN	PADAPTER			pAdapter,
-	IN	u8				RFPath,
-	IN	u8				Rate,	
-	IN	CHANNEL_WIDTH		BandWidth,	
-	IN	u8				Channel
+PHY_GetTxPowerIndex8814A(
+	IN	PADAPTER		pAdapter,
+	IN	enum rf_path		RFPath,
+	IN	u8			Rate,
+	IN	u8			BandWidth,
+	IN	u8			Channel,
+	struct txpwr_idx_comp *tic
 	)
 {
-	PHAL_DATA_TYPE		pHalData = GET_HAL_DATA(pAdapter);
+	PHAL_DATA_TYPE	pHalData = GET_HAL_DATA(pAdapter);
+	struct hal_spec_t *hal_spec = GET_HAL_SPEC(pAdapter);
 	s8				powerDiffByRate = 0;
 	s8				txPower = 0, limit = 0;
-	u8				tx_num = MgntQuery_NssTxRate(Rate );
-	BOOLEAN				bIn24G = FALSE;
+	u8				ntx_idx = MgntQuery_NssTxRate(Rate );
+	BOOLEAN			bIn24G = FALSE;
+	s8				tpt_offset = 0;
 
-	/* DBG_871X( "===>%s\n", __FUNCTION__ ); */
-	
-	txPower = (s8) PHY_GetTxPowerIndexBase( pAdapter, RFPath, Rate, BandWidth, Channel, &bIn24G );
+	/* RTW_INFO( "===>%s\n", __FUNCTION__ ); */
+	if(pAdapter->mppriv.bSetTxPower)
+	{
+		PMPT_CONTEXT pMptCtx = &(pAdapter->mppriv.mpt_ctx);
+		txPower = pMptCtx->TxPwrLevel[RFPath];
+	}
+	else
+	{
+		txPower = (s8) PHY_GetTxPowerIndexBase( pAdapter, RFPath, Rate, ntx_idx, BandWidth, Channel, &bIn24G );
 
-	powerDiffByRate = PHY_GetTxPowerByRate( pAdapter, (u8)(!bIn24G), RFPath, tx_num, Rate );
+		powerDiffByRate = PHY_GetTxPowerByRate( pAdapter, (u8)(!bIn24G), RFPath, Rate );
 
-	limit = PHY_GetTxPowerLimit( pAdapter, pAdapter->registrypriv.RegPwrTblSel, (u8)(!bIn24G), pHalData->CurrentChannelBW, RFPath, Rate, pHalData->CurrentChannel);
+		limit = PHY_GetTxPowerLimit( pAdapter, NULL, (u8)(!bIn24G), pHalData->current_channel_bw, RFPath, Rate,ntx_idx, pHalData->current_channel);
+		tpt_offset = PHY_GetTxPowerTrackingOffset(pAdapter, RFPath, Rate);
 
-	powerDiffByRate = powerDiffByRate > limit ? limit : powerDiffByRate;
-	/*DBG_871X("Rate-0x%x: (TxPower, PowerDiffByRate Path-%c) = (0x%X, %d)\n", Rate, ((RFPath==0)?'A':(RFPath==1)?'B':(RFPath==2)?'C':'D'), txPower, powerDiffByRate);*/
+		powerDiffByRate = powerDiffByRate > limit ? limit : powerDiffByRate;
+		/*RTW_INFO("Rate-0x%x: (TxPower, PowerDiffByRate Path-%c) = (0x%X, %d)\n", Rate, ((RFPath==0)?'A':(RFPath==1)?'B':(RFPath==2)?'C':'D'), txPower, powerDiffByRate);*/
 
-	txPower += powerDiffByRate;
-	
-	//txPower += PHY_GetTxPowerTrackingOffset( pAdapter, RFPath, Rate );
-#if 0 //todo ?
-#if CCX_SUPPORT
-	CCX_CellPowerLimit( pAdapter, Channel, Rate, &txPower );
-#endif
-#endif
-	phy_TxPwrAdjInPercentage(pAdapter, (u8 *)&txPower);
-	if(txPower > MAX_POWER_INDEX)
-		txPower = MAX_POWER_INDEX;
+		txPower += powerDiffByRate;
+		
+		//txPower += PHY_GetTxPowerTrackingOffset( pAdapter, RFPath, Rate );
+	#if 0 //todo ?
+	#if CCX_SUPPORT
+		CCX_CellPowerLimit( pAdapter, Channel, Rate, &txPower );
+	#endif
+	#endif
+		phy_TxPwrAdjInPercentage(pAdapter, (u8 *)&txPower);
+	}
+	if (tic) {
+		tic->ntx_idx = ntx_idx;
+		tic->base = txPower;
+		tic->by_rate = powerDiffByRate;
+		tic->limit = limit;
+		tic->tpt = tpt_offset;
+		tic->ebias = 0;
+	}
+
+	if(txPower > hal_spec->txgi_max)
+		txPower = hal_spec->txgi_max;
 
 	//if (Adapter->registrypriv.mp_mode==0 && 
 		//(pHalData->bautoload_fail_flag || pHalData->EfuseMap[EFUSE_INIT_MAP][EEPROM_TX_PWR_INX_JAGUAR] == 0xFF))
 		//txPower = 0x12;
 
-	/*DBG_871X("Final Tx Power(RF-%c, Channel: %d) = %d(0x%X)\n", ((RFPath==0)?'A':(RFPath==1)?'B':(RFPath==2)?'C':'D'), Channel,
+	/*RTW_INFO("Final Tx Power(RF-%c, Channel: %d) = %d(0x%X)\n", ((RFPath==0)?'A':(RFPath==1)?'B':(RFPath==2)?'C':'D'), Channel,
 		txPower, txPower);*/
 
-	return (u8) txPower;	
+	return (u8) txPower;
 }
 
 
@@ -1344,17 +1261,17 @@ VOID
 PHY_SetTxPowerIndex_8814A(
 	IN	PADAPTER			Adapter,
 	IN	u32				PowerIndex,
-	IN	u8				RFPath,	
+	IN	enum rf_path				RFPath,
 	IN	u8				Rate
 	)
 {
 	u32	txagc_table_wd = 0x00801000;
 
 	txagc_table_wd |= (RFPath << 8) | MRateToHwRate(Rate) | (PowerIndex << 24);
-	PHY_SetBBReg(Adapter, 0x1998, bMaskDWord, txagc_table_wd);
-	/* DBG_871X("txagc_table_wd %x\n", txagc_table_wd); */
+	phy_set_bb_reg(Adapter, 0x1998, bMaskDWord, txagc_table_wd);
+	/* RTW_INFO("txagc_table_wd %x\n", txagc_table_wd); */
 	if (Rate == MGN_1M) {
-		PHY_SetBBReg(Adapter, 0x1998, bMaskDWord, txagc_table_wd);	/* first time to turn on the txagc table */
+		phy_set_bb_reg(Adapter, 0x1998, bMaskDWord, txagc_table_wd);	/* first time to turn on the txagc table */
 										/* second to write the addr0 */
 	}
 }
@@ -1374,25 +1291,25 @@ u32
 PHY_GetTxBBSwing_8814A(
 	IN	PADAPTER	Adapter,
 	IN	BAND_TYPE 	Band,
-	IN 	u8 		RFPath
+	IN 	enum rf_path 		RFPath
 	)
 {
     HAL_DATA_TYPE	*pHalData = GET_HAL_DATA(GetDefaultAdapter(Adapter));
-    PDM_ODM_T		pDM_Odm = &pHalData->odmpriv;
-    PODM_RF_CAL_T  	pRFCalibrateInfo = &(pDM_Odm->RFCalibrateInfo);
+    struct dm_struct		*		pDM_Odm = &pHalData->odmpriv;
+    struct dm_rf_calibration_struct	*  	pRFCalibrateInfo = &(pDM_Odm->rf_calibrate_info);
     s8 			bbSwing_2G = -1 * GetRegTxBBSwing_2G(Adapter);
     s8 			bbSwing_5G = -1 * GetRegTxBBSwing_5G(Adapter);
     u32          		out = 0x200;
     const s8		AUTO = -1;
 
-	RT_TRACE(COMP_MP, DBG_LOUD, ("===> PHY_GetTxBBSwing_8814A, bbSwing_2G: %d, bbSwing_5G: %d\n", 
-										  (s4Byte)bbSwing_2G, (s4Byte)bbSwing_5G));
+	RTW_DBG("===> PHY_GetTxBBSwing_8814A, bbSwing_2G: %d, bbSwing_5G: %d\n", 
+										  (s4Byte)bbSwing_2G, (s4Byte)bbSwing_5G);
 
     if ( pHalData->bautoload_fail_flag )
     {
 		if ( Band == BAND_ON_2_4G ) 
 		{
-			pRFCalibrateInfo->BBSwingDiff2G = bbSwing_2G;
+			pRFCalibrateInfo->bb_swing_diff_2g = bbSwing_2G;
 			if      (bbSwing_2G == 0)  out = 0x200; //  0 dB
 			else if (bbSwing_2G == -3) out = 0x16A; // -3 dB
 			else if (bbSwing_2G == -6) out = 0x101; // -6 dB
@@ -1401,41 +1318,41 @@ PHY_GetTxBBSwing_8814A(
 			{
 				if ( pHalData->ExternalPA_2G ) 
 				{
-					pRFCalibrateInfo->BBSwingDiff2G = -3;
+					pRFCalibrateInfo->bb_swing_diff_2g = -3;
 					out = 0x16A;
 				} 
 				else  
 				{
-					pRFCalibrateInfo->BBSwingDiff2G = 0;
+					pRFCalibrateInfo->bb_swing_diff_2g = 0;
 					out = 0x200;
 				}
 	            }
 	        } 
 		else if ( Band == BAND_ON_5G ) 
 		{
-			pRFCalibrateInfo->BBSwingDiff5G = bbSwing_5G;
+			pRFCalibrateInfo->bb_swing_diff_5g = bbSwing_5G;
 			if(bbSwing_5G == 0)  out = 0x200; //  0 dB
 			else if (bbSwing_5G == -3) out = 0x16A; // -3 dB
 			else if (bbSwing_5G == -6) out = 0x101; // -6 dB
 			else if (bbSwing_5G == -9) out = 0x0B6; // -9 dB
 			else 
 			{
-				if (pHalData->ExternalPA_5G) 
+				if (pHalData->external_pa_5g) 
 				{
-					pRFCalibrateInfo->BBSwingDiff5G = -3;
+					pRFCalibrateInfo->bb_swing_diff_5g = -3;
 					out = 0x16A;
 				} 
 				else 
 				{
-					pRFCalibrateInfo->BBSwingDiff5G = 0;
+					pRFCalibrateInfo->bb_swing_diff_5g = 0;
 					out = 0x200;
 				}
 			}
 		}
 		else  
 		{
-			pRFCalibrateInfo->BBSwingDiff2G = -3;
-			pRFCalibrateInfo->BBSwingDiff5G = -3;			
+			pRFCalibrateInfo->bb_swing_diff_2g = -3;
+			pRFCalibrateInfo->bb_swing_diff_5g = -3;			
 			out = 0x16A; // -3 dB
 		}
 	}
@@ -1484,49 +1401,49 @@ PHY_GetTxBBSwing_8814A(
 			else swing = 0x00;
 		}
 
-		if (RFPath == ODM_RF_PATH_A)
+		if (RFPath == RF_PATH_A)
 			onePathSwing = (swing & 0x3) >> 0; // 0xC6/C7[1:0]
-		else if(RFPath == ODM_RF_PATH_B)		
+		else if(RFPath == RF_PATH_B)		
 			onePathSwing = (swing & 0xC) >> 2; // 0xC6/C7[3:2]
-		else if(RFPath == ODM_RF_PATH_C)
+		else if(RFPath == RF_PATH_C)
 			onePathSwing = (swing & 0x30) >> 4; // 0xC6/C7[5:4]
-		else if(RFPath == ODM_RF_PATH_D)
+		else if(RFPath == RF_PATH_D)
 			onePathSwing = (swing & 0xC0) >> 6; // 0xC6/C7[7:6]
 
 		if (onePathSwing == 0x0) 
 		{
 			if (Band == BAND_ON_2_4G) 
-				pRFCalibrateInfo->BBSwingDiff2G = 0;
+				pRFCalibrateInfo->bb_swing_diff_2g = 0;
 			else
-				pRFCalibrateInfo->BBSwingDiff5G = 0;
+				pRFCalibrateInfo->bb_swing_diff_5g = 0;
 			out = 0x200; // 0 dB
 		} 
 		else if (onePathSwing == 0x1) 
 		{
 			if (Band == BAND_ON_2_4G) 
-				pRFCalibrateInfo->BBSwingDiff2G = -3;
+				pRFCalibrateInfo->bb_swing_diff_2g = -3;
 			else
-				pRFCalibrateInfo->BBSwingDiff5G = -3;
+				pRFCalibrateInfo->bb_swing_diff_5g = -3;
 			out = 0x16A; // -3 dB
 		} 
 		else if (onePathSwing == 0x2) 
 		{
 			if (Band == BAND_ON_2_4G) 
-				pRFCalibrateInfo->BBSwingDiff2G = -6;
+				pRFCalibrateInfo->bb_swing_diff_2g = -6;
 			else
-				pRFCalibrateInfo->BBSwingDiff5G = -6;
+				pRFCalibrateInfo->bb_swing_diff_5g = -6;
 			out = 0x101; // -6 dB
 		} 
 		else if (onePathSwing == 0x3) 
 		{
 			if (Band == BAND_ON_2_4G) 
-				pRFCalibrateInfo->BBSwingDiff2G = -9;
+				pRFCalibrateInfo->bb_swing_diff_2g = -9;
 			else
-				pRFCalibrateInfo->BBSwingDiff5G = -9;
+				pRFCalibrateInfo->bb_swing_diff_5g = -9;
 			out = 0x0B6; // -9 dB
 		}
 	}
-	RT_TRACE(COMP_MP, DBG_LOUD,("<=== PHY_GetTxBBSwing_8814A, out = 0x%X\n", out));
+	RTW_DBG("<=== PHY_GetTxBBSwing_8814A, out = 0x%X\n", out);
 	return out;
 }
 
@@ -1537,7 +1454,7 @@ VOID
 phy_SetBwRegAdc_8814A(
 	IN	PADAPTER		Adapter,
 	IN	u8			Band,
-	IN	CHANNEL_WIDTH 	CurrentBW
+	IN	enum channel_width 	CurrentBW
 )	
 {
 	switch(CurrentBW)
@@ -1545,27 +1462,27 @@ phy_SetBwRegAdc_8814A(
 		case CHANNEL_WIDTH_20:
 			if(Band == BAND_ON_5G)
 			{
-				PHY_SetBBReg(Adapter, rRFMOD_Jaguar, BIT(1)|BIT(0), 0x0); 	// 0x8ac[28, 21,20,16, 9:6,1,0]=10'b10_0011_0000
+				phy_set_bb_reg(Adapter, rRFMOD_Jaguar, BIT(1)|BIT(0), 0x0); 	// 0x8ac[28, 21,20,16, 9:6,1,0]=10'b10_0011_0000
 			}
 			else
 			{
-				PHY_SetBBReg(Adapter, rRFMOD_Jaguar, BIT(1)|BIT(0), 0x0); 	// 0x8ac[28, 21,20,16, 9:6,1,0]=10'b10_0101_0000
+				phy_set_bb_reg(Adapter, rRFMOD_Jaguar, BIT(1)|BIT(0), 0x0); 	// 0x8ac[28, 21,20,16, 9:6,1,0]=10'b10_0101_0000
 			}
 			break;
 
 		case CHANNEL_WIDTH_40:
 			if(Band == BAND_ON_5G)
 			{
-				PHY_SetBBReg(Adapter, rRFMOD_Jaguar, BIT(1)|BIT(0), 0x1);		// 0x8ac[17, 11, 10, 7:6,1,0]=7'b100_0001
+				phy_set_bb_reg(Adapter, rRFMOD_Jaguar, BIT(1)|BIT(0), 0x1);		// 0x8ac[17, 11, 10, 7:6,1,0]=7'b100_0001
 			}
 			else
 			{
-				PHY_SetBBReg(Adapter, rRFMOD_Jaguar, BIT(1)|BIT(0), 0x1);		// 0x8ac[17, 11, 10, 7:6,1,0]=7'b101_0001
+				phy_set_bb_reg(Adapter, rRFMOD_Jaguar, BIT(1)|BIT(0), 0x1);		// 0x8ac[17, 11, 10, 7:6,1,0]=7'b101_0001
 			}
 			break;
 
 		case CHANNEL_WIDTH_80:
-			PHY_SetBBReg(Adapter, rRFMOD_Jaguar, BIT(1)|BIT(0), 0x02);				// 0x8ac[7:6,1,0]=4'b0010
+			phy_set_bb_reg(Adapter, rRFMOD_Jaguar, BIT(1)|BIT(0), 0x02);				// 0x8ac[7:6,1,0]=4'b0010
 			break;
 
 		default:
@@ -1579,7 +1496,7 @@ VOID
 phy_SetBwRegAgc_8814A(
 	IN	PADAPTER		Adapter,
 	IN	u8			Band,
-	IN	CHANNEL_WIDTH 	CurrentBW
+	IN	enum channel_width 	CurrentBW
 )	
 {
 	u32 AgcValue = 7;
@@ -1608,7 +1525,7 @@ phy_SetBwRegAgc_8814A(
 			break;
 	}
 
-	PHY_SetBBReg(Adapter, rAGC_table_Jaguar, 0xf000, AgcValue);	// 0x82C[15:12] = AgcValue				
+	phy_set_bb_reg(Adapter, rAGC_table_Jaguar, 0xf000, AgcValue);	// 0x82C[15:12] = AgcValue				
 }
 
 
@@ -1658,14 +1575,14 @@ PHY_SetRFEReg8814A(
 
 	if(bInit)
 	{	
-		switch(pHalData->RFEType){
+		switch(pHalData->rfe_type){
 		case 2:case 1:
-			PHY_SetBBReg(Adapter, 0x1994, 0xf, 0xf);								// 0x1994[3:0] = 0xf
+			phy_set_bb_reg(Adapter, 0x1994, 0xf, 0xf);								// 0x1994[3:0] = 0xf
 			u1tmp = PlatformEFIORead1Byte(Adapter, REG_GPIO_IO_SEL_8814A);
 			rtw_write8(Adapter, REG_GPIO_IO_SEL_8814A, u1tmp | 0xf0);	// 0x40[23:20] = 0xf
 			break;
 		case 0:
-			PHY_SetBBReg(Adapter, 0x1994, 0xf, 0xf);								// 0x1994[3:0] = 0xf
+			phy_set_bb_reg(Adapter, 0x1994, 0xf, 0xf);								// 0x1994[3:0] = 0xf
 			u1tmp = PlatformEFIORead1Byte(Adapter, REG_GPIO_IO_SEL_8814A);
 			rtw_write8(Adapter, REG_GPIO_IO_SEL_8814A, u1tmp | 0xc0);	// 0x40[23:22] = 2b'11
 			break;
@@ -1673,59 +1590,59 @@ PHY_SetRFEReg8814A(
 	}
 	else if(Band == BAND_ON_2_4G)
 	{
-		switch(pHalData->RFEType){
+		switch(pHalData->rfe_type){
 			case 2:
-			PHY_SetBBReg(Adapter, rA_RFE_Pinmux_Jaguar, bMaskDWord, 0x72707270);	// 0xCB0 = 0x72707270
-			PHY_SetBBReg(Adapter, rB_RFE_Pinmux_Jaguar, bMaskDWord, 0x72707270);	// 0xEB0 = 0x72707270
-			PHY_SetBBReg(Adapter, rC_RFE_Pinmux_Jaguar, bMaskDWord, 0x72707270);	// 0x18B4 = 0x72707270
-			PHY_SetBBReg(Adapter, rD_RFE_Pinmux_Jaguar, bMaskDWord, 0x77707770);	// 0x1AB4 = 0x77707770
-			PHY_SetBBReg(Adapter, 0x1ABC, 0x0ff00000, 0x72);						// 0x1ABC[27:20] = 0x72
+			phy_set_bb_reg(Adapter, rA_RFE_Pinmux_Jaguar, bMaskDWord, 0x72707270);	// 0xCB0 = 0x72707270
+			phy_set_bb_reg(Adapter, rB_RFE_Pinmux_Jaguar, bMaskDWord, 0x72707270);	// 0xEB0 = 0x72707270
+			phy_set_bb_reg(Adapter, rC_RFE_Pinmux_Jaguar, bMaskDWord, 0x72707270);	// 0x18B4 = 0x72707270
+			phy_set_bb_reg(Adapter, rD_RFE_Pinmux_Jaguar, bMaskDWord, 0x77707770);	// 0x1AB4 = 0x77707770
+			phy_set_bb_reg(Adapter, 0x1ABC, 0x0ff00000, 0x72);						// 0x1ABC[27:20] = 0x72
 			break;
 
 		case 1:
-			PHY_SetBBReg(Adapter, rA_RFE_Pinmux_Jaguar, bMaskDWord, 0x77777777);	// 0xCB0 = 0x77777777
-			PHY_SetBBReg(Adapter, rB_RFE_Pinmux_Jaguar, bMaskDWord, 0x77777777);	// 0xEB0 = 0x77777777
-			PHY_SetBBReg(Adapter, rC_RFE_Pinmux_Jaguar, bMaskDWord, 0x77777777);	// 0x18B4 = 0x77777777
-			PHY_SetBBReg(Adapter, rD_RFE_Pinmux_Jaguar, bMaskDWord, 0x77777777);	// 0x1AB4 = 0x77777777
-			PHY_SetBBReg(Adapter, 0x1ABC, 0x0ff00000, 0x77);						// 0x1ABC[27:20] = 0x77
+			phy_set_bb_reg(Adapter, rA_RFE_Pinmux_Jaguar, bMaskDWord, 0x77777777);	// 0xCB0 = 0x77777777
+			phy_set_bb_reg(Adapter, rB_RFE_Pinmux_Jaguar, bMaskDWord, 0x77777777);	// 0xEB0 = 0x77777777
+			phy_set_bb_reg(Adapter, rC_RFE_Pinmux_Jaguar, bMaskDWord, 0x77777777);	// 0x18B4 = 0x77777777
+			phy_set_bb_reg(Adapter, rD_RFE_Pinmux_Jaguar, bMaskDWord, 0x77777777);	// 0x1AB4 = 0x77777777
+			phy_set_bb_reg(Adapter, 0x1ABC, 0x0ff00000, 0x77);						// 0x1ABC[27:20] = 0x77
 			break;
 
 		case 0:
 		default:
-			PHY_SetBBReg(Adapter, rA_RFE_Pinmux_Jaguar, bMaskDWord, 0x77777777);	// 0xCB0 = 0x77777777
-			PHY_SetBBReg(Adapter, rB_RFE_Pinmux_Jaguar, bMaskDWord, 0x77777777);	// 0xEB0 = 0x77777777
-			PHY_SetBBReg(Adapter, rC_RFE_Pinmux_Jaguar, bMaskDWord, 0x77777777);	// 0x18B4 = 0x77777777
-			PHY_SetBBReg(Adapter, 0x1ABC, 0x0ff00000, 0x77);						// 0x1ABC[27:20] = 0x77
+			phy_set_bb_reg(Adapter, rA_RFE_Pinmux_Jaguar, bMaskDWord, 0x77777777);	// 0xCB0 = 0x77777777
+			phy_set_bb_reg(Adapter, rB_RFE_Pinmux_Jaguar, bMaskDWord, 0x77777777);	// 0xEB0 = 0x77777777
+			phy_set_bb_reg(Adapter, rC_RFE_Pinmux_Jaguar, bMaskDWord, 0x77777777);	// 0x18B4 = 0x77777777
+			phy_set_bb_reg(Adapter, 0x1ABC, 0x0ff00000, 0x77);						// 0x1ABC[27:20] = 0x77
 			break;
 			
 		}
 	}
 	else
 	{
-		switch(pHalData->RFEType){
+		switch(pHalData->rfe_type){
 		case 2:
-			PHY_SetBBReg(Adapter, rA_RFE_Pinmux_Jaguar, bMaskDWord, 0x33173717);	// 0xCB0 = 0x33173717
-			PHY_SetBBReg(Adapter, rB_RFE_Pinmux_Jaguar, bMaskDWord, 0x33173717);	// 0xEB0 = 0x33173717
-			PHY_SetBBReg(Adapter, rC_RFE_Pinmux_Jaguar, bMaskDWord, 0x33173717);	// 0x18B4 = 0x33173717
-			PHY_SetBBReg(Adapter, rD_RFE_Pinmux_Jaguar, bMaskDWord, 0x77177717);	// 0x1AB4 = 0x77177717
-			PHY_SetBBReg(Adapter, 0x1ABC, 0x0ff00000, 0x37);						// 0x1ABC[27:20] = 0x37
+			phy_set_bb_reg(Adapter, rA_RFE_Pinmux_Jaguar, bMaskDWord, 0x33173717);	// 0xCB0 = 0x33173717
+			phy_set_bb_reg(Adapter, rB_RFE_Pinmux_Jaguar, bMaskDWord, 0x33173717);	// 0xEB0 = 0x33173717
+			phy_set_bb_reg(Adapter, rC_RFE_Pinmux_Jaguar, bMaskDWord, 0x33173717);	// 0x18B4 = 0x33173717
+			phy_set_bb_reg(Adapter, rD_RFE_Pinmux_Jaguar, bMaskDWord, 0x77177717);	// 0x1AB4 = 0x77177717
+			phy_set_bb_reg(Adapter, 0x1ABC, 0x0ff00000, 0x37);						// 0x1ABC[27:20] = 0x37
 			break;
 			
 		case 1:
-			PHY_SetBBReg(Adapter, rA_RFE_Pinmux_Jaguar, bMaskDWord, 0x33173317);	// 0xCB0 = 0x33173317
-			PHY_SetBBReg(Adapter, rB_RFE_Pinmux_Jaguar, bMaskDWord, 0x33173317);	// 0xEB0 = 0x33173317
-			PHY_SetBBReg(Adapter, rC_RFE_Pinmux_Jaguar, bMaskDWord, 0x33173317);	// 0x18B4 = 0x33173317
-			PHY_SetBBReg(Adapter, rD_RFE_Pinmux_Jaguar, bMaskDWord, 0x77177717);	// 0x1AB4 = 0x77177717
-			PHY_SetBBReg(Adapter, 0x1ABC, 0x0ff00000, 0x33);						// 0x1ABC[27:20] = 0x33
+			phy_set_bb_reg(Adapter, rA_RFE_Pinmux_Jaguar, bMaskDWord, 0x33173317);	// 0xCB0 = 0x33173317
+			phy_set_bb_reg(Adapter, rB_RFE_Pinmux_Jaguar, bMaskDWord, 0x33173317);	// 0xEB0 = 0x33173317
+			phy_set_bb_reg(Adapter, rC_RFE_Pinmux_Jaguar, bMaskDWord, 0x33173317);	// 0x18B4 = 0x33173317
+			phy_set_bb_reg(Adapter, rD_RFE_Pinmux_Jaguar, bMaskDWord, 0x77177717);	// 0x1AB4 = 0x77177717
+			phy_set_bb_reg(Adapter, 0x1ABC, 0x0ff00000, 0x33);						// 0x1ABC[27:20] = 0x33
 			break;
 
 		case 0:
 		default:
-			PHY_SetBBReg(Adapter, rA_RFE_Pinmux_Jaguar, bMaskDWord, 0x54775477);	// 0xCB0 = 0x54775477
-			PHY_SetBBReg(Adapter, rB_RFE_Pinmux_Jaguar, bMaskDWord, 0x54775477);	// 0xEB0 = 0x54775477
-			PHY_SetBBReg(Adapter, rC_RFE_Pinmux_Jaguar, bMaskDWord, 0x54775477);	// 0x18B4 = 0x54775477
-			PHY_SetBBReg(Adapter, rD_RFE_Pinmux_Jaguar, bMaskDWord, 0x54775477);	// 0x1AB4 = 0x54775477
-			PHY_SetBBReg(Adapter, 0x1ABC, 0x0ff00000, 0x54);						// 0x1ABC[27:20] = 0x54
+			phy_set_bb_reg(Adapter, rA_RFE_Pinmux_Jaguar, bMaskDWord, 0x54775477);	// 0xCB0 = 0x54775477
+			phy_set_bb_reg(Adapter, rB_RFE_Pinmux_Jaguar, bMaskDWord, 0x54775477);	// 0xEB0 = 0x54775477
+			phy_set_bb_reg(Adapter, rC_RFE_Pinmux_Jaguar, bMaskDWord, 0x54775477);	// 0x18B4 = 0x54775477
+			phy_set_bb_reg(Adapter, rD_RFE_Pinmux_Jaguar, bMaskDWord, 0x54775477);	// 0x1AB4 = 0x54775477
+			phy_set_bb_reg(Adapter, 0x1ABC, 0x0ff00000, 0x54);						// 0x1ABC[27:20] = 0x54
 			break;
 		}
 	}
@@ -1741,29 +1658,29 @@ phy_SetBBSwingByBand_8814A(
 	HAL_DATA_TYPE	*pHalData = GET_HAL_DATA(Adapter);
 
 	s8 			BBDiffBetweenBand = 0; 		
-	PDM_ODM_T		pDM_Odm = &pHalData->odmpriv;
-	PODM_RF_CAL_T  	pRFCalibrateInfo = &(pDM_Odm->RFCalibrateInfo);
+	struct dm_struct		*		pDM_Odm = &pHalData->odmpriv;
+	struct dm_rf_calibration_struct	*  	pRFCalibrateInfo = &(pDM_Odm->rf_calibrate_info);
 	
-	PHY_SetBBReg(Adapter, rA_TxScale_Jaguar, 0xFFE00000, 
-				 PHY_GetTxBBSwing_8814A(Adapter, (BAND_TYPE)Band, ODM_RF_PATH_A)); // 0xC1C[31:21]
-	PHY_SetBBReg(Adapter, rB_TxScale_Jaguar, 0xFFE00000, 
-				 PHY_GetTxBBSwing_8814A(Adapter, (BAND_TYPE)Band, ODM_RF_PATH_B)); // 0xE1C[31:21]
-	PHY_SetBBReg(Adapter, rC_TxScale_Jaguar2, 0xFFE00000, 
-				 PHY_GetTxBBSwing_8814A(Adapter, (BAND_TYPE)Band, ODM_RF_PATH_C)); // 0x181C[31:21]
-	PHY_SetBBReg(Adapter, rD_TxScale_Jaguar2, 0xFFE00000, 
-				 PHY_GetTxBBSwing_8814A(Adapter, (BAND_TYPE)Band, ODM_RF_PATH_D)); // 0x1A1C[31:21]
+	phy_set_bb_reg(Adapter, rA_TxScale_Jaguar, 0xFFE00000, 
+				 PHY_GetTxBBSwing_8814A(Adapter, (BAND_TYPE)Band, RF_PATH_A)); // 0xC1C[31:21]
+	phy_set_bb_reg(Adapter, rB_TxScale_Jaguar, 0xFFE00000, 
+				 PHY_GetTxBBSwing_8814A(Adapter, (BAND_TYPE)Band, RF_PATH_B)); // 0xE1C[31:21]
+	phy_set_bb_reg(Adapter, rC_TxScale_Jaguar2, 0xFFE00000, 
+				 PHY_GetTxBBSwing_8814A(Adapter, (BAND_TYPE)Band, RF_PATH_C)); // 0x181C[31:21]
+	phy_set_bb_reg(Adapter, rD_TxScale_Jaguar2, 0xFFE00000, 
+				 PHY_GetTxBBSwing_8814A(Adapter, (BAND_TYPE)Band, RF_PATH_D)); // 0x1A1C[31:21]
 				 
 	// <20121005, Kordan> When TxPowerTrack is ON, we should take care of the change of BB swing.
 	// That is, reset all info to trigger Tx power tracking.
 		
 	if (Band != PreviousBand) 
 	{
-		BBDiffBetweenBand = (pRFCalibrateInfo->BBSwingDiff2G - pRFCalibrateInfo->BBSwingDiff5G);
+		BBDiffBetweenBand = (pRFCalibrateInfo->bb_swing_diff_2g - pRFCalibrateInfo->bb_swing_diff_5g);
 		BBDiffBetweenBand = (Band == BAND_ON_2_4G) ? BBDiffBetweenBand : (-1 * BBDiffBetweenBand);
-		pRFCalibrateInfo->DefaultOfdmIndex += BBDiffBetweenBand*2;				
+		pRFCalibrateInfo->default_ofdm_index += BBDiffBetweenBand*2;				
 	}
 	
-	ODM_ClearTxPowerTrackingState(pDM_Odm);
+	odm_clear_txpowertracking_state(pDM_Odm);
 }
 
 
@@ -1774,44 +1691,44 @@ PHY_SwitchWirelessBand8814A(
 )
 {
 	HAL_DATA_TYPE	*pHalData	= GET_HAL_DATA(Adapter);
-	u8	PreBand = pHalData->CurrentBandType, tepReg = 0;
+	u8	PreBand = pHalData->current_band_type, tepReg = 0;
 			
-	DBG_871X("==>PHY_SwitchWirelessBand8814() %s\n", ((Band==0)?"2.4G":"5G"));
+	RTW_INFO("==>PHY_SwitchWirelessBand8814() %s\n", ((Band==0)?"2.4G":"5G"));
 
-	pHalData->CurrentBandType =(BAND_TYPE)Band;
+	pHalData->current_band_type =(BAND_TYPE)Band;
 
 	/*clear 0x1000[16],	When this bit is set to 0, CCK and OFDM are disabled, and clock are gated. Otherwise, CCK and OFDM are enabled. */
 	tepReg = rtw_read8(Adapter, REG_SYS_CFG3_8814A+2);
 	rtw_write8(Adapter, REG_SYS_CFG3_8814A+2, tepReg & (~BIT0));
 	
 	// STOP Tx/Rx
-	//PHY_SetBBReg(Adapter, rOFDMCCKEN_Jaguar, bOFDMEN_Jaguar|bCCKEN_Jaguar, 0x00);	
+	//phy_set_bb_reg(Adapter, rOFDMCCKEN_Jaguar, bOFDMEN_Jaguar|bCCKEN_Jaguar, 0x00);	
 
 	if(Band == BAND_ON_2_4G)
 	{// 2.4G band
 
 		// AGC table select 
-		PHY_SetBBReg(Adapter, rAGC_table_Jaguar2, 0x1F, 0);									// 0x958[4:0] = 5b'00000
+		phy_set_bb_reg(Adapter, rAGC_table_Jaguar2, 0x1F, 0);									// 0x958[4:0] = 5b'00000
 
 		PHY_SetRFEReg8814A(Adapter, FALSE, Band);
 
 		// cck_enable
-		//PHY_SetBBReg(Adapter, rOFDMCCKEN_Jaguar, bOFDMEN_Jaguar|bCCKEN_Jaguar, 0x3);
+		//phy_set_bb_reg(Adapter, rOFDMCCKEN_Jaguar, bOFDMEN_Jaguar|bCCKEN_Jaguar, 0x3);
 
 		if(Adapter->registrypriv.mp_mode == 0)
 		{
 			// 0x80C & 0xa04 should use same antenna.
-			PHY_SetBBReg(Adapter, rTxPath_Jaguar, 0xf0, 0x2);
-			PHY_SetBBReg(Adapter, rCCK_RX_Jaguar, 0x0f000000, 0x5);
+			phy_set_bb_reg(Adapter, rTxPath_Jaguar, 0xf0, 0x2);
+			phy_set_bb_reg(Adapter, rCCK_RX_Jaguar, 0x0f000000, 0x5);
 		}
 
-		PHY_SetBBReg(Adapter, rOFDMCCKEN_Jaguar, bOFDMEN_Jaguar|bCCKEN_Jaguar, 0x3);
+		phy_set_bb_reg(Adapter, rOFDMCCKEN_Jaguar, bOFDMEN_Jaguar|bCCKEN_Jaguar, 0x3);
 
 		
 		// CCK_CHECK_en
 		rtw_write8(Adapter, REG_CCK_CHECK_8814A, 0x0);
 		/* after 5G swicth 2G , set A82[2] = 0 */
-		PHY_SetBBReg(Adapter, 0xa80, BIT18, 0x0);
+		phy_set_bb_reg(Adapter, 0xa80, BIT18, 0x0);
 			
 	}
 	else	//5G band
@@ -1819,32 +1736,32 @@ PHY_SwitchWirelessBand8814A(
 		// CCK_CHECK_en
 		rtw_write8(Adapter, REG_CCK_CHECK_8814A, 0x80);
 		/* Enable CCK Tx function, even when CCK is off */
-		PHY_SetBBReg(Adapter, 0xa80, BIT18, 0x1);
+		phy_set_bb_reg(Adapter, 0xa80, BIT18, 0x1);
 	
 		// AGC table select 
 		// Postpone to channel switch
-		//PHY_SetBBReg(Adapter, rAGC_table_Jaguar2, 0x1F, 1);									// 0x958[4:0] = 5b'00001
+		//phy_set_bb_reg(Adapter, rAGC_table_Jaguar2, 0x1F, 1);									// 0x958[4:0] = 5b'00001
 
 		PHY_SetRFEReg8814A(Adapter, FALSE, Band);
 
 		if(Adapter->registrypriv.mp_mode == 0)
 		{
-			PHY_SetBBReg(Adapter, rTxPath_Jaguar, 0xf0, 0x0);
-			PHY_SetBBReg(Adapter, rCCK_RX_Jaguar, 0x0f000000, 0xF);
+			phy_set_bb_reg(Adapter, rTxPath_Jaguar, 0xf0, 0x0);
+			phy_set_bb_reg(Adapter, rCCK_RX_Jaguar, 0x0f000000, 0xF);
 		}
 
-		PHY_SetBBReg(Adapter, rOFDMCCKEN_Jaguar, bOFDMEN_Jaguar|bCCKEN_Jaguar, 0x02);
-		//DBG_871X("==>PHY_SwitchWirelessBand8814() BAND_ON_5G settings OFDM index 0x%x\n", pHalData->OFDM_index[0]);
+		phy_set_bb_reg(Adapter, rOFDMCCKEN_Jaguar, bOFDMEN_Jaguar|bCCKEN_Jaguar, 0x02);
+		//RTW_INFO("==>PHY_SwitchWirelessBand8814() BAND_ON_5G settings OFDM index 0x%x\n", pHalData->OFDM_index[0]);
 	}
 
 	phy_SetBBSwingByBand_8814A(Adapter, Band, PreBand);
-	phy_SetBwRegAdc_8814A(Adapter, Band, pHalData->CurrentChannelBW);
-	phy_SetBwRegAgc_8814A(Adapter, Band, pHalData->CurrentChannelBW);
+	phy_SetBwRegAdc_8814A(Adapter, Band, pHalData->current_channel_bw);
+	phy_SetBwRegAgc_8814A(Adapter, Band, pHalData->current_channel_bw);
 	/* set 0x1000[16], When this bit is set to 0, CCK and OFDM are disabled, and clock are gated. Otherwise, CCK and OFDM are enabled.*/
 	tepReg = rtw_read8(Adapter, REG_SYS_CFG3_8814A+2);
 	rtw_write8(Adapter, REG_SYS_CFG3_8814A+2, tepReg | BIT0);
 	
-	DBG_871X("<==PHY_SwitchWirelessBand8814():Switch Band OK.\n");
+	RTW_INFO("<==PHY_SwitchWirelessBand8814():Switch Band OK.\n");
 	return _SUCCESS;	
 }
 
@@ -1857,15 +1774,15 @@ phy_GetSecondaryChnl_8814A(
 	u8						SCSettingOf40 = 0, SCSettingOf20 = 0;
 	PHAL_DATA_TYPE				pHalData = GET_HAL_DATA(Adapter);
 
-	//DBG_871X("SCMapping: Case: pHalData->CurrentChannelBW %d, pHalData->nCur80MhzPrimeSC %d, pHalData->nCur40MhzPrimeSC %d \n",pHalData->CurrentChannelBW,pHalData->nCur80MhzPrimeSC,pHalData->nCur40MhzPrimeSC);
-	if(pHalData->CurrentChannelBW== CHANNEL_WIDTH_80)
+	//RTW_INFO("SCMapping: Case: pHalData->current_channel_bw %d, pHalData->nCur80MhzPrimeSC %d, pHalData->nCur40MhzPrimeSC %d \n",pHalData->current_channel_bw,pHalData->nCur80MhzPrimeSC,pHalData->nCur40MhzPrimeSC);
+	if(pHalData->current_channel_bw== CHANNEL_WIDTH_80)
 	{
 		if(pHalData->nCur80MhzPrimeSC == HAL_PRIME_CHNL_OFFSET_LOWER)
 			SCSettingOf40 = VHT_DATA_SC_40_LOWER_OF_80MHZ;
 		else if(pHalData->nCur80MhzPrimeSC == HAL_PRIME_CHNL_OFFSET_UPPER)
 			SCSettingOf40 = VHT_DATA_SC_40_UPPER_OF_80MHZ;
 		else
-			DBG_871X("SCMapping: DONOT CARE Mode Setting\n");
+			RTW_INFO("SCMapping: DONOT CARE Mode Setting\n");
 		
 		if((pHalData->nCur40MhzPrimeSC == HAL_PRIME_CHNL_OFFSET_LOWER) && (pHalData->nCur80MhzPrimeSC == HAL_PRIME_CHNL_OFFSET_LOWER))
 			SCSettingOf20 = VHT_DATA_SC_20_LOWEST_OF_80MHZ;
@@ -1882,22 +1799,22 @@ phy_GetSecondaryChnl_8814A(
 			else if(pHalData->nCur80MhzPrimeSC == HAL_PRIME_CHNL_OFFSET_UPPER)
 				SCSettingOf20 = VHT_DATA_SC_40_UPPER_OF_80MHZ;
 			else
-				DBG_871X("SCMapping: DONOT CARE Mode Setting\n");
+				RTW_INFO("SCMapping: DONOT CARE Mode Setting\n");
 		}	
 	}
-	else if(pHalData->CurrentChannelBW == CHANNEL_WIDTH_40)
+	else if(pHalData->current_channel_bw == CHANNEL_WIDTH_40)
 	{
-		DBG_871X("SCMapping: pHalData->CurrentChannelBW %d, pHalData->nCur40MhzPrimeSC %d \n",pHalData->CurrentChannelBW,pHalData->nCur40MhzPrimeSC);
+		RTW_INFO("SCMapping: pHalData->current_channel_bw %d, pHalData->nCur40MhzPrimeSC %d \n",pHalData->current_channel_bw,pHalData->nCur40MhzPrimeSC);
 
 		if(pHalData->nCur40MhzPrimeSC == HAL_PRIME_CHNL_OFFSET_UPPER)
 			SCSettingOf20 = VHT_DATA_SC_20_UPPER_OF_80MHZ;
 		else if(pHalData->nCur40MhzPrimeSC == HAL_PRIME_CHNL_OFFSET_LOWER)
 			SCSettingOf20 = VHT_DATA_SC_20_LOWER_OF_80MHZ;
 		else
-			DBG_871X("SCMapping: DONOT CARE Mode Setting\n");
+			RTW_INFO("SCMapping: DONOT CARE Mode Setting\n");
 	}
 
-	/*DBG_871X("SCMapping: SC Value %x\n", ((SCSettingOf40 << 4) | SCSettingOf20));*/
+	/*RTW_INFO("SCMapping: SC Value %x\n", ((SCSettingOf40 << 4) | SCSettingOf20));*/
 	return  ( (SCSettingOf40 << 4) | SCSettingOf20);
 }
 
@@ -1905,7 +1822,7 @@ phy_GetSecondaryChnl_8814A(
 VOID
 phy_SetBwRegMac_8814A(
 	IN	PADAPTER		Adapter,
-	CHANNEL_WIDTH 	CurrentBW
+	enum channel_width 	CurrentBW
 )	
 {
 	u16		RegRfMod_BW, u2tmp = 0;
@@ -1937,22 +1854,22 @@ void PHY_Set_SecCCATH_by_RXANT_8814A(PADAPTER	pAdapter,u4Byte	ulAntennaRx)
 {
 	PHAL_DATA_TYPE		pHalData	= GET_HAL_DATA(pAdapter);
 
-	if ((pHalData->bSWToBW40M == TRUE) && (pHalData->CurrentChannelBW != CHANNEL_WIDTH_40)) {
-		PHY_SetBBReg(pAdapter, rPwed_TH_Jaguar, 0x007c0000,pHalData->BackUp_BB_REG_4_2nd_CCA[0]);
-		PHY_SetBBReg(pAdapter, rCCAonSec_Jaguar, 0x0000ff00,pHalData->BackUp_BB_REG_4_2nd_CCA[1]);
-		PHY_SetBBReg(pAdapter, r_L1_SBD_start_time, 0x0f000000,pHalData->BackUp_BB_REG_4_2nd_CCA[2]);
+	if ((pHalData->bSWToBW40M == TRUE) && (pHalData->current_channel_bw != CHANNEL_WIDTH_40)) {
+		phy_set_bb_reg(pAdapter, rPwed_TH_Jaguar, 0x007c0000,pHalData->BackUp_BB_REG_4_2nd_CCA[0]);
+		phy_set_bb_reg(pAdapter, rCCAonSec_Jaguar, 0x0000ff00,pHalData->BackUp_BB_REG_4_2nd_CCA[1]);
+		phy_set_bb_reg(pAdapter, r_L1_SBD_start_time, 0x0f000000,pHalData->BackUp_BB_REG_4_2nd_CCA[2]);
 		pHalData->bSWToBW40M = FALSE;
 	}
 
-	if ((pHalData->bSWToBW80M == TRUE) && (pHalData->CurrentChannelBW != CHANNEL_WIDTH_80)) {
-		PHY_SetBBReg(pAdapter, r_L1_SBD_start_time, 0x0f000000, pHalData->BackUp_BB_REG_4_2nd_CCA[2]);
+	if ((pHalData->bSWToBW80M == TRUE) && (pHalData->current_channel_bw != CHANNEL_WIDTH_80)) {
+		phy_set_bb_reg(pAdapter, r_L1_SBD_start_time, 0x0f000000, pHalData->BackUp_BB_REG_4_2nd_CCA[2]);
 		pHalData->bSWToBW80M = FALSE;
 	}
 
 	/*1 Setting CCA TH 2nd CCA parameter by Rx Antenna*/
-	if (pHalData->CurrentChannelBW == CHANNEL_WIDTH_80) {
+	if (pHalData->current_channel_bw == CHANNEL_WIDTH_80) {
 		if (pHalData->bSWToBW80M == FALSE) {
-			pHalData->BackUp_BB_REG_4_2nd_CCA[2] = PHY_QueryBBReg(pAdapter, r_L1_SBD_start_time, 0x0f000000);
+			pHalData->BackUp_BB_REG_4_2nd_CCA[2] = phy_query_bb_reg(pAdapter, r_L1_SBD_start_time, 0x0f000000);
 		}
 
 		pHalData->bSWToBW80M = TRUE;
@@ -1962,11 +1879,11 @@ void PHY_Set_SecCCATH_by_RXANT_8814A(PADAPTER	pAdapter,u4Byte	ulAntennaRx)
 		case ANTENNA_B:
 		case ANTENNA_C:
 		case ANTENNA_D:
-				PHY_SetBBReg(pAdapter, r_L1_SBD_start_time, 0x0f000000,0x0b);/* 0x844[27:24] = 0xb */
-				PHY_SetBBReg(pAdapter, rCCAonSec_Jaguar, 0x00000001, 0x1); /* 0x838 Enable 2ndCCA */
-				PHY_SetBBReg(pAdapter, rAGC_table_Jaguar, 0x00FF0000, 0x89); /* 0x82C[23:20] = 8, PWDB_TH_QB, 0x82C[19:16] = 9, PWDB_TH_HB*/
-				PHY_SetBBReg(pAdapter, rCCAonSec_Jaguar, 0x0FFF0000, 0x887); /* 838[27:24]=8, RF80_secondary40, 838[23:20]=8, RF80_secondary20, 838[19:16]=7, RF80_primary*/
-				PHY_SetBBReg(pAdapter, rL1_Weight_Jaguar, 0x0000F000, 0x7);	/* 840[15:12]=7, L1_square_Pk_weight_80M*/
+				phy_set_bb_reg(pAdapter, r_L1_SBD_start_time, 0x0f000000,0x0b);/* 0x844[27:24] = 0xb */
+				phy_set_bb_reg(pAdapter, rCCAonSec_Jaguar, 0x00000001, 0x1); /* 0x838 Enable 2ndCCA */
+				phy_set_bb_reg(pAdapter, rAGC_table_Jaguar, 0x00FF0000, 0x89); /* 0x82C[23:20] = 8, PWDB_TH_QB, 0x82C[19:16] = 9, PWDB_TH_HB*/
+				phy_set_bb_reg(pAdapter, rCCAonSec_Jaguar, 0x0FFF0000, 0x887); /* 838[27:24]=8, RF80_secondary40, 838[23:20]=8, RF80_secondary20, 838[19:16]=7, RF80_primary*/
+				phy_set_bb_reg(pAdapter, rL1_Weight_Jaguar, 0x0000F000, 0x7);	/* 840[15:12]=7, L1_square_Pk_weight_80M*/
 		break;
 
 		case ANTENNA_AB:
@@ -1975,41 +1892,41 @@ void PHY_Set_SecCCATH_by_RXANT_8814A(PADAPTER	pAdapter,u4Byte	ulAntennaRx)
 		case ANTENNA_BC:
 		case ANTENNA_BD:
 		case ANTENNA_CD:
-				PHY_SetBBReg(pAdapter, r_L1_SBD_start_time, 0x0f000000,0x0d);
-				PHY_SetBBReg(pAdapter, rCCAonSec_Jaguar, 0x00000001, 0x1); /* Enable 2ndCCA*/
-				PHY_SetBBReg(pAdapter, rAGC_table_Jaguar, 0x00FF0000, 0x78); /* 0x82C[23:20] = 7, PWDB_TH_QB, 0x82C[19:16] = 8, PWDB_TH_HB*/
-				PHY_SetBBReg(pAdapter, rCCAonSec_Jaguar, 0x0FFF0000, 0x444); /* 838[27:24]=4, RF80_secondary40, 838[23:20]=4, RF80_secondary20, 838[19:16]=4, RF80_primary*/
-				PHY_SetBBReg(pAdapter, rL1_Weight_Jaguar, 0x0000F000, 0x6); /* 840[15:12]=6, L1_square_Pk_weight_80M*/
+				phy_set_bb_reg(pAdapter, r_L1_SBD_start_time, 0x0f000000,0x0d);
+				phy_set_bb_reg(pAdapter, rCCAonSec_Jaguar, 0x00000001, 0x1); /* Enable 2ndCCA*/
+				phy_set_bb_reg(pAdapter, rAGC_table_Jaguar, 0x00FF0000, 0x78); /* 0x82C[23:20] = 7, PWDB_TH_QB, 0x82C[19:16] = 8, PWDB_TH_HB*/
+				phy_set_bb_reg(pAdapter, rCCAonSec_Jaguar, 0x0FFF0000, 0x444); /* 838[27:24]=4, RF80_secondary40, 838[23:20]=4, RF80_secondary20, 838[19:16]=4, RF80_primary*/
+				phy_set_bb_reg(pAdapter, rL1_Weight_Jaguar, 0x0000F000, 0x6); /* 840[15:12]=6, L1_square_Pk_weight_80M*/
 		break;
 
 		case ANTENNA_ABC:
 		case ANTENNA_ABD:
 		case ANTENNA_ACD:
 		case ANTENNA_BCD:
-				PHY_SetBBReg(pAdapter, r_L1_SBD_start_time, 0x0f000000,0x0d);
-				PHY_SetBBReg(pAdapter, rCCAonSec_Jaguar, 0x00000001, 0x1); /* Enable 2ndCCA*/
-				PHY_SetBBReg(pAdapter, rAGC_table_Jaguar, 0x00FF0000, 0x98); /* 0x82C[23:20] = 9, PWDB_TH_QB, 0x82C[19:16] = 8, PWDB_TH_HB*/
-				PHY_SetBBReg(pAdapter, rCCAonSec_Jaguar, 0x0FFF0000, 0x666); /* 838[27:24]=6, RF80_secondary40, 838[23:20]=6, RF80_secondary20, 838[19:16]=6, RF80_primary*/
-				PHY_SetBBReg(pAdapter, rL1_Weight_Jaguar, 0x0000F000, 0x6); /* 840[15:12]=6, L1_square_Pk_weight_80M*/
+				phy_set_bb_reg(pAdapter, r_L1_SBD_start_time, 0x0f000000,0x0d);
+				phy_set_bb_reg(pAdapter, rCCAonSec_Jaguar, 0x00000001, 0x1); /* Enable 2ndCCA*/
+				phy_set_bb_reg(pAdapter, rAGC_table_Jaguar, 0x00FF0000, 0x98); /* 0x82C[23:20] = 9, PWDB_TH_QB, 0x82C[19:16] = 8, PWDB_TH_HB*/
+				phy_set_bb_reg(pAdapter, rCCAonSec_Jaguar, 0x0FFF0000, 0x666); /* 838[27:24]=6, RF80_secondary40, 838[23:20]=6, RF80_secondary20, 838[19:16]=6, RF80_primary*/
+				phy_set_bb_reg(pAdapter, rL1_Weight_Jaguar, 0x0000F000, 0x6); /* 840[15:12]=6, L1_square_Pk_weight_80M*/
 		break;
 
 		case ANTENNA_ABCD:
-				PHY_SetBBReg(pAdapter, r_L1_SBD_start_time, 0x0f000000,0x0d);
-				PHY_SetBBReg(pAdapter, rCCAonSec_Jaguar, 0x00000001, 0x1); /*Enable 2ndCCA*/
-				PHY_SetBBReg(pAdapter, rAGC_table_Jaguar, 0x00FF0000, 0x98); /* 0x82C[23:20] = 9, PWDB_TH_QB, 0x82C[19:16] = 8, PWDB_TH_HB*/
-				PHY_SetBBReg(pAdapter, rCCAonSec_Jaguar, 0x0FFF0000, 0x666); /* 838[27:24]=6, RF80_secondary40, 838[23:20]=6, RF80_secondary20, 838[19:16]=6, RF80_primary*/
-				PHY_SetBBReg(pAdapter, rL1_Weight_Jaguar, 0x0000F000, 0x7); /*840[15:12]=7, L1_square_Pk_weight_80M*/
+				phy_set_bb_reg(pAdapter, r_L1_SBD_start_time, 0x0f000000,0x0d);
+				phy_set_bb_reg(pAdapter, rCCAonSec_Jaguar, 0x00000001, 0x1); /*Enable 2ndCCA*/
+				phy_set_bb_reg(pAdapter, rAGC_table_Jaguar, 0x00FF0000, 0x98); /* 0x82C[23:20] = 9, PWDB_TH_QB, 0x82C[19:16] = 8, PWDB_TH_HB*/
+				phy_set_bb_reg(pAdapter, rCCAonSec_Jaguar, 0x0FFF0000, 0x666); /* 838[27:24]=6, RF80_secondary40, 838[23:20]=6, RF80_secondary20, 838[19:16]=6, RF80_primary*/
+				phy_set_bb_reg(pAdapter, rL1_Weight_Jaguar, 0x0000F000, 0x7); /*840[15:12]=7, L1_square_Pk_weight_80M*/
 		break;
 
 		default:
-				DBG_871X("Unknown Rx antenna.\n");
+				RTW_INFO("Unknown Rx antenna.\n");
 		break;
 		}
-	} else if(pHalData->CurrentChannelBW == CHANNEL_WIDTH_40) {
+	} else if(pHalData->current_channel_bw == CHANNEL_WIDTH_40) {
 		if (pHalData->bSWToBW40M == FALSE) {
-			pHalData->BackUp_BB_REG_4_2nd_CCA[0] = PHY_QueryBBReg(pAdapter, rPwed_TH_Jaguar, 0x007c0000);
-			pHalData->BackUp_BB_REG_4_2nd_CCA[1] = PHY_QueryBBReg(pAdapter, rCCAonSec_Jaguar, 0x0000ff00);
-			pHalData->BackUp_BB_REG_4_2nd_CCA[2] = PHY_QueryBBReg(pAdapter, r_L1_SBD_start_time, 0x0f000000);
+			pHalData->BackUp_BB_REG_4_2nd_CCA[0] = phy_query_bb_reg(pAdapter, rPwed_TH_Jaguar, 0x007c0000);
+			pHalData->BackUp_BB_REG_4_2nd_CCA[1] = phy_query_bb_reg(pAdapter, rCCAonSec_Jaguar, 0x0000ff00);
+			pHalData->BackUp_BB_REG_4_2nd_CCA[2] = phy_query_bb_reg(pAdapter, r_L1_SBD_start_time, 0x0f000000);
 		}
 
 		switch (ulAntennaRx) {
@@ -2017,10 +1934,10 @@ void PHY_Set_SecCCATH_by_RXANT_8814A(PADAPTER	pAdapter,u4Byte	ulAntennaRx)
 		case ANTENNA_B:
 		case ANTENNA_C:
 		case ANTENNA_D:
-						PHY_SetBBReg(pAdapter, r_L1_SBD_start_time, 0x0f000000,0x0b);
-						PHY_SetBBReg(pAdapter, rPwed_TH_Jaguar, 0x007c0000, 0xe);
-						PHY_SetBBReg(pAdapter, rCCAonSec_Jaguar, 0x0000ff00, 0x43);
-						PHY_SetBBReg(pAdapter, rCCAonSec_Jaguar, 0x00000001, 0x1);
+						phy_set_bb_reg(pAdapter, r_L1_SBD_start_time, 0x0f000000,0x0b);
+						phy_set_bb_reg(pAdapter, rPwed_TH_Jaguar, 0x007c0000, 0xe);
+						phy_set_bb_reg(pAdapter, rCCAonSec_Jaguar, 0x0000ff00, 0x43);
+						phy_set_bb_reg(pAdapter, rCCAonSec_Jaguar, 0x00000001, 0x1);
 						break;
 		case ANTENNA_AB: /* xT2R*/
 		case ANTENNA_AC:
@@ -2028,30 +1945,30 @@ void PHY_Set_SecCCATH_by_RXANT_8814A(PADAPTER	pAdapter,u4Byte	ulAntennaRx)
 		case ANTENNA_BC:
 		case ANTENNA_BD:
 		case ANTENNA_CD:
-						PHY_SetBBReg(pAdapter, r_L1_SBD_start_time, 0x0f000000,0x0d);
-						PHY_SetBBReg(pAdapter, rPwed_TH_Jaguar, 0x007c0000, 0x8);
-						PHY_SetBBReg(pAdapter, rCCAonSec_Jaguar, 0x0000ff00, 0x43);
-						PHY_SetBBReg(pAdapter, rCCAonSec_Jaguar, 0x00000001, 0x1);
+						phy_set_bb_reg(pAdapter, r_L1_SBD_start_time, 0x0f000000,0x0d);
+						phy_set_bb_reg(pAdapter, rPwed_TH_Jaguar, 0x007c0000, 0x8);
+						phy_set_bb_reg(pAdapter, rCCAonSec_Jaguar, 0x0000ff00, 0x43);
+						phy_set_bb_reg(pAdapter, rCCAonSec_Jaguar, 0x00000001, 0x1);
 						break;
 		case ANTENNA_ABC: /* xT3R*/
 		case ANTENNA_ABD:
 		case ANTENNA_ACD:
 		case ANTENNA_BCD:
 		case ANTENNA_ABCD:  /* xT4R*/
-						PHY_SetBBReg(pAdapter, r_L1_SBD_start_time, 0x0f000000,0x0d);
-						PHY_SetBBReg(pAdapter, rPwed_TH_Jaguar, 0x007c0000, 0xa);
-						PHY_SetBBReg(pAdapter, rCCAonSec_Jaguar, 0x0000ff00, 0x43);
-						PHY_SetBBReg(pAdapter, rCCAonSec_Jaguar, 0x00000001, 0x1);
+						phy_set_bb_reg(pAdapter, r_L1_SBD_start_time, 0x0f000000,0x0d);
+						phy_set_bb_reg(pAdapter, rPwed_TH_Jaguar, 0x007c0000, 0xa);
+						phy_set_bb_reg(pAdapter, rCCAonSec_Jaguar, 0x0000ff00, 0x43);
+						phy_set_bb_reg(pAdapter, rCCAonSec_Jaguar, 0x00000001, 0x1);
 						break;
 		default:
 						break;
 		}
 		pHalData->bSWToBW40M = TRUE;
 	} else {
-		PHY_SetBBReg(pAdapter, rCCAonSec_Jaguar, 0x00000001, 0x0); /* Enable 2ndCCA*/
-		PHY_SetBBReg(pAdapter, rAGC_table_Jaguar, 0x00FF0000, 0x43); /* 0x82C[23:20] = 9, PWDB_TH_QB, 0x82C[19:16] = 8, PWDB_TH_HB*/
-		PHY_SetBBReg(pAdapter, rCCAonSec_Jaguar, 0x0FFF0000, 0x7aa); /* 838[27:24]=6, RF80_secondary40, 838[23:20]=6, RF80_secondary20, 838[19:16]=6, RF80_primary*/
-		PHY_SetBBReg(pAdapter, rL1_Weight_Jaguar, 0x0000F000, 0x7); /* 840[15:12]=7, L1_square_Pk_weight_80M*/
+		phy_set_bb_reg(pAdapter, rCCAonSec_Jaguar, 0x00000001, 0x0); /* Enable 2ndCCA*/
+		phy_set_bb_reg(pAdapter, rAGC_table_Jaguar, 0x00FF0000, 0x43); /* 0x82C[23:20] = 9, PWDB_TH_QB, 0x82C[19:16] = 8, PWDB_TH_HB*/
+		phy_set_bb_reg(pAdapter, rCCAonSec_Jaguar, 0x0FFF0000, 0x7aa); /* 838[27:24]=6, RF80_secondary40, 838[23:20]=6, RF80_secondary20, 838[19:16]=6, RF80_primary*/
+		phy_set_bb_reg(pAdapter, rL1_Weight_Jaguar, 0x0000F000, 0x7); /* 840[15:12]=7, L1_square_Pk_weight_80M*/
 	}
 	
 }
@@ -2061,28 +1978,28 @@ VOID PHY_SetRXSC_by_TXSC_8814A(PADAPTER	Adapter, u1Byte SubChnlNum)
 {
 	PHAL_DATA_TYPE pHalData = GET_HAL_DATA(Adapter);
 
-	if (pHalData->CurrentChannelBW == CHANNEL_WIDTH_80) {
+	if (pHalData->current_channel_bw == CHANNEL_WIDTH_80) {
 		if (SubChnlNum == 0)
-			PHY_SetBBReg(Adapter, rRFMOD_Jaguar, 0x00000003c, 0x1);
+			phy_set_bb_reg(Adapter, rRFMOD_Jaguar, 0x00000003c, 0x1);
 		else if (SubChnlNum == 1)
-			PHY_SetBBReg(Adapter, rRFMOD_Jaguar, 0x00000003c, 0x1);
+			phy_set_bb_reg(Adapter, rRFMOD_Jaguar, 0x00000003c, 0x1);
 		else if (SubChnlNum == 2)
-			PHY_SetBBReg(Adapter, rRFMOD_Jaguar, 0x00000003c, 0x2);
+			phy_set_bb_reg(Adapter, rRFMOD_Jaguar, 0x00000003c, 0x2);
 		else if (SubChnlNum == 4)
-			PHY_SetBBReg(Adapter, rRFMOD_Jaguar, 0x00000003c, 0x4);
+			phy_set_bb_reg(Adapter, rRFMOD_Jaguar, 0x00000003c, 0x4);
 		else if (SubChnlNum == 3)
-			PHY_SetBBReg(Adapter, rRFMOD_Jaguar, 0x00000003c, 0x3);
+			phy_set_bb_reg(Adapter, rRFMOD_Jaguar, 0x00000003c, 0x3);
 		else if (SubChnlNum == 9)
-			PHY_SetBBReg(Adapter, rRFMOD_Jaguar, 0x00000003c, 0x1);
+			phy_set_bb_reg(Adapter, rRFMOD_Jaguar, 0x00000003c, 0x1);
 		else if (SubChnlNum == 10)
-			PHY_SetBBReg(Adapter, rRFMOD_Jaguar, 0x00000003c, 0x2);
-	} else if (pHalData->CurrentChannelBW == CHANNEL_WIDTH_40) { 
+			phy_set_bb_reg(Adapter, rRFMOD_Jaguar, 0x00000003c, 0x2);
+	} else if (pHalData->current_channel_bw == CHANNEL_WIDTH_40) { 
 		if (SubChnlNum == 1)
-			PHY_SetBBReg(Adapter, rRFMOD_Jaguar, 0x00000003c, 0x1);
+			phy_set_bb_reg(Adapter, rRFMOD_Jaguar, 0x00000003c, 0x1);
 		else if (SubChnlNum == 2)
-			PHY_SetBBReg(Adapter, rRFMOD_Jaguar, 0x00000003c, 0x2);
+			phy_set_bb_reg(Adapter, rRFMOD_Jaguar, 0x00000003c, 0x2);
 	} else
-		PHY_SetBBReg(Adapter, rRFMOD_Jaguar, 0x00000003c, 0x0);
+		phy_set_bb_reg(Adapter, rRFMOD_Jaguar, 0x00000003c, 0x0);
 }
 
 
@@ -2092,60 +2009,60 @@ VOID phy_SpurCalibration_8814A(PADAPTER	Adapter)
 	HAL_DATA_TYPE	*pHalData = GET_HAL_DATA(Adapter);
 
 	BOOLEAN		Reset_NBI_CSI = TRUE;
-	PDM_ODM_T		pDM_Odm = &pHalData->odmpriv;
+	struct dm_struct		*		pDM_Odm = &pHalData->odmpriv;
 
-	/*DBG_871X("%s(),RFE Type =%d, CurrentCh = %d ,ChannelBW =%d\n", __func__, pHalData->RFEType, pHalData->CurrentChannel, pHalData->CurrentChannelBW);*/
-	/*DBG_871X("%s(),Before RrNBI_Setting_Jaguar= %x\n", __func__, PHY_QueryBBReg(Adapter, rNBI_Setting_Jaguar, bMaskDWord));*/
+	/*RTW_INFO("%s(),RFE Type =%d, CurrentCh = %d ,ChannelBW =%d\n", __func__, pHalData->rfe_type, pHalData->current_channel, pHalData->current_channel_bw);*/
+	/*RTW_INFO("%s(),Before RrNBI_Setting_Jaguar= %x\n", __func__, phy_query_bb_reg(Adapter, rNBI_Setting_Jaguar, bMaskDWord));*/
 	
-	if (pHalData->RFEType == 0) {
-		switch (pHalData->CurrentChannelBW) {
+	if (pHalData->rfe_type == 0) {
+		switch (pHalData->current_channel_bw) {
 		case CHANNEL_WIDTH_40:
-				if (pHalData->CurrentChannel == 54 || pHalData->CurrentChannel == 118) {
-					PHY_SetBBReg(Adapter, rNBI_Setting_Jaguar, 0x000fe000, 0x3e >> 1);
-					PHY_SetBBReg(Adapter, rCSI_Mask_Setting1_Jaguar, BIT(0), 1);
-					PHY_SetBBReg(Adapter, rCSI_Fix_Mask0_Jaguar, bMaskDWord, 0);
-					PHY_SetBBReg(Adapter, rCSI_Fix_Mask1_Jaguar, BIT(0), 1);
-					PHY_SetBBReg(Adapter, rCSI_Fix_Mask6_Jaguar, bMaskDWord, 0);
-					PHY_SetBBReg(Adapter, rCSI_Fix_Mask7_Jaguar, bMaskDWord, 0);
+				if (pHalData->current_channel == 54 || pHalData->current_channel == 118) {
+					phy_set_bb_reg(Adapter, rNBI_Setting_Jaguar, 0x000fe000, 0x3e >> 1);
+					phy_set_bb_reg(Adapter, rCSI_Mask_Setting1_Jaguar, BIT(0), 1);
+					phy_set_bb_reg(Adapter, rCSI_Fix_Mask0_Jaguar, bMaskDWord, 0);
+					phy_set_bb_reg(Adapter, rCSI_Fix_Mask1_Jaguar, BIT(0), 1);
+					phy_set_bb_reg(Adapter, rCSI_Fix_Mask6_Jaguar, bMaskDWord, 0);
+					phy_set_bb_reg(Adapter, rCSI_Fix_Mask7_Jaguar, bMaskDWord, 0);
 					Reset_NBI_CSI = FALSE;
-				} else if (pHalData->CurrentChannel == 151) {
-					PHY_SetBBReg(Adapter, rNBI_Setting_Jaguar, 0x000fe000, 0x1e >> 1);
-					PHY_SetBBReg(Adapter, rCSI_Mask_Setting1_Jaguar, BIT(0), 1);
-					PHY_SetBBReg(Adapter, rCSI_Fix_Mask0_Jaguar,  BIT(16), 1);
-					PHY_SetBBReg(Adapter, rCSI_Fix_Mask1_Jaguar, bMaskDWord, 0);
-					PHY_SetBBReg(Adapter, rCSI_Fix_Mask6_Jaguar, bMaskDWord, 0);
-					PHY_SetBBReg(Adapter, rCSI_Fix_Mask7_Jaguar, bMaskDWord, 0);
+				} else if (pHalData->current_channel == 151) {
+					phy_set_bb_reg(Adapter, rNBI_Setting_Jaguar, 0x000fe000, 0x1e >> 1);
+					phy_set_bb_reg(Adapter, rCSI_Mask_Setting1_Jaguar, BIT(0), 1);
+					phy_set_bb_reg(Adapter, rCSI_Fix_Mask0_Jaguar,  BIT(16), 1);
+					phy_set_bb_reg(Adapter, rCSI_Fix_Mask1_Jaguar, bMaskDWord, 0);
+					phy_set_bb_reg(Adapter, rCSI_Fix_Mask6_Jaguar, bMaskDWord, 0);
+					phy_set_bb_reg(Adapter, rCSI_Fix_Mask7_Jaguar, bMaskDWord, 0);
 					Reset_NBI_CSI = FALSE;
 				}
 		break;
 
 		case CHANNEL_WIDTH_80:
-				if (pHalData->CurrentChannel == 58 || pHalData->CurrentChannel == 122) {
-					PHY_SetBBReg(Adapter, rNBI_Setting_Jaguar, 0x000fe000, 0x3a >> 1);
-					PHY_SetBBReg(Adapter, rCSI_Mask_Setting1_Jaguar, BIT(0), 1);
-					PHY_SetBBReg(Adapter, rCSI_Fix_Mask0_Jaguar, bMaskDWord, 0);
-					PHY_SetBBReg(Adapter, rCSI_Fix_Mask1_Jaguar, bMaskDWord, 0);
-					PHY_SetBBReg(Adapter, rCSI_Fix_Mask6_Jaguar, bMaskDWord, 0);
-					PHY_SetBBReg(Adapter, rCSI_Fix_Mask7_Jaguar, BIT(0), 1);
+				if (pHalData->current_channel == 58 || pHalData->current_channel == 122) {
+					phy_set_bb_reg(Adapter, rNBI_Setting_Jaguar, 0x000fe000, 0x3a >> 1);
+					phy_set_bb_reg(Adapter, rCSI_Mask_Setting1_Jaguar, BIT(0), 1);
+					phy_set_bb_reg(Adapter, rCSI_Fix_Mask0_Jaguar, bMaskDWord, 0);
+					phy_set_bb_reg(Adapter, rCSI_Fix_Mask1_Jaguar, bMaskDWord, 0);
+					phy_set_bb_reg(Adapter, rCSI_Fix_Mask6_Jaguar, bMaskDWord, 0);
+					phy_set_bb_reg(Adapter, rCSI_Fix_Mask7_Jaguar, BIT(0), 1);
 					Reset_NBI_CSI = FALSE;
-				} else if (pHalData->CurrentChannel == 155) {
-					PHY_SetBBReg(Adapter, rNBI_Setting_Jaguar, 0x000fe000, 0x5a >> 1);
-					PHY_SetBBReg(Adapter, rCSI_Mask_Setting1_Jaguar, BIT(0), 1);
-					PHY_SetBBReg(Adapter, rCSI_Fix_Mask0_Jaguar, bMaskDWord, 0);
-					PHY_SetBBReg(Adapter, rCSI_Fix_Mask1_Jaguar, bMaskDWord, 0);
-					PHY_SetBBReg(Adapter, rCSI_Fix_Mask6_Jaguar, BIT(16), 1);
-					PHY_SetBBReg(Adapter, rCSI_Fix_Mask7_Jaguar, bMaskDWord, 0);
+				} else if (pHalData->current_channel == 155) {
+					phy_set_bb_reg(Adapter, rNBI_Setting_Jaguar, 0x000fe000, 0x5a >> 1);
+					phy_set_bb_reg(Adapter, rCSI_Mask_Setting1_Jaguar, BIT(0), 1);
+					phy_set_bb_reg(Adapter, rCSI_Fix_Mask0_Jaguar, bMaskDWord, 0);
+					phy_set_bb_reg(Adapter, rCSI_Fix_Mask1_Jaguar, bMaskDWord, 0);
+					phy_set_bb_reg(Adapter, rCSI_Fix_Mask6_Jaguar, BIT(16), 1);
+					phy_set_bb_reg(Adapter, rCSI_Fix_Mask7_Jaguar, bMaskDWord, 0);
 					Reset_NBI_CSI = FALSE;
 				}
 		break;
 		case CHANNEL_WIDTH_20:
-				if (pHalData->CurrentChannel == 153) {
-					PHY_SetBBReg(Adapter, rNBI_Setting_Jaguar, 0x000fe000, 0x1e >> 1);
-					PHY_SetBBReg(Adapter, rCSI_Mask_Setting1_Jaguar, BIT(0), 1);
-					PHY_SetBBReg(Adapter, rCSI_Fix_Mask0_Jaguar, bMaskDWord, 0);
-					PHY_SetBBReg(Adapter, rCSI_Fix_Mask1_Jaguar, bMaskDWord, 0);
-					PHY_SetBBReg(Adapter, rCSI_Fix_Mask6_Jaguar, bMaskDWord, 0);
-					PHY_SetBBReg(Adapter, rCSI_Fix_Mask7_Jaguar, BIT(16), 1);
+				if (pHalData->current_channel == 153) {
+					phy_set_bb_reg(Adapter, rNBI_Setting_Jaguar, 0x000fe000, 0x1e >> 1);
+					phy_set_bb_reg(Adapter, rCSI_Mask_Setting1_Jaguar, BIT(0), 1);
+					phy_set_bb_reg(Adapter, rCSI_Fix_Mask0_Jaguar, bMaskDWord, 0);
+					phy_set_bb_reg(Adapter, rCSI_Fix_Mask1_Jaguar, bMaskDWord, 0);
+					phy_set_bb_reg(Adapter, rCSI_Fix_Mask6_Jaguar, bMaskDWord, 0);
+					phy_set_bb_reg(Adapter, rCSI_Fix_Mask7_Jaguar, BIT(16), 1);
 					Reset_NBI_CSI = FALSE;
 					}
 		break;
@@ -2153,38 +2070,38 @@ VOID phy_SpurCalibration_8814A(PADAPTER	Adapter)
 		default:
 		break;
 		}
-	} else if (pHalData->RFEType == 1 || pHalData->RFEType == 2) {
-			switch (pHalData->CurrentChannelBW) {
+	} else if (pHalData->rfe_type == 1 || pHalData->rfe_type == 2) {
+			switch (pHalData->current_channel_bw) {
 			case CHANNEL_WIDTH_20:
-					if (pHalData->CurrentChannel == 153) {
-						PHY_SetBBReg(Adapter, rNBI_Setting_Jaguar, 0x000fe000, 0x1E >> 1);
-						PHY_SetBBReg(Adapter, rCSI_Mask_Setting1_Jaguar, BIT(0), 1);
-						PHY_SetBBReg(Adapter, rCSI_Fix_Mask0_Jaguar, bMaskDWord, 0);
-						PHY_SetBBReg(Adapter, rCSI_Fix_Mask1_Jaguar, bMaskDWord, 0);
-						PHY_SetBBReg(Adapter, rCSI_Fix_Mask6_Jaguar, bMaskDWord, 0);
-						PHY_SetBBReg(Adapter, rCSI_Fix_Mask7_Jaguar, BIT(16), 1);
+					if (pHalData->current_channel == 153) {
+						phy_set_bb_reg(Adapter, rNBI_Setting_Jaguar, 0x000fe000, 0x1E >> 1);
+						phy_set_bb_reg(Adapter, rCSI_Mask_Setting1_Jaguar, BIT(0), 1);
+						phy_set_bb_reg(Adapter, rCSI_Fix_Mask0_Jaguar, bMaskDWord, 0);
+						phy_set_bb_reg(Adapter, rCSI_Fix_Mask1_Jaguar, bMaskDWord, 0);
+						phy_set_bb_reg(Adapter, rCSI_Fix_Mask6_Jaguar, bMaskDWord, 0);
+						phy_set_bb_reg(Adapter, rCSI_Fix_Mask7_Jaguar, BIT(16), 1);
 						Reset_NBI_CSI = FALSE;
 					}
 			break;
 			case CHANNEL_WIDTH_40:
-					if (pHalData->CurrentChannel == 151) {
-						PHY_SetBBReg(Adapter, rNBI_Setting_Jaguar, 0x000fe000, 0x1e >> 1);
-						PHY_SetBBReg(Adapter, rCSI_Mask_Setting1_Jaguar, BIT(0), 1);
-						PHY_SetBBReg(Adapter, rCSI_Fix_Mask0_Jaguar, BIT(16), 1);
-						PHY_SetBBReg(Adapter, rCSI_Fix_Mask1_Jaguar, bMaskDWord, 0);
-						PHY_SetBBReg(Adapter, rCSI_Fix_Mask6_Jaguar, bMaskDWord, 0);
-						PHY_SetBBReg(Adapter, rCSI_Fix_Mask7_Jaguar, bMaskDWord, 0);
+					if (pHalData->current_channel == 151) {
+						phy_set_bb_reg(Adapter, rNBI_Setting_Jaguar, 0x000fe000, 0x1e >> 1);
+						phy_set_bb_reg(Adapter, rCSI_Mask_Setting1_Jaguar, BIT(0), 1);
+						phy_set_bb_reg(Adapter, rCSI_Fix_Mask0_Jaguar, BIT(16), 1);
+						phy_set_bb_reg(Adapter, rCSI_Fix_Mask1_Jaguar, bMaskDWord, 0);
+						phy_set_bb_reg(Adapter, rCSI_Fix_Mask6_Jaguar, bMaskDWord, 0);
+						phy_set_bb_reg(Adapter, rCSI_Fix_Mask7_Jaguar, bMaskDWord, 0);
 						Reset_NBI_CSI = FALSE;
 					}
 			break;
 			case CHANNEL_WIDTH_80:
-					if (pHalData->CurrentChannel == 155) {
-						PHY_SetBBReg(Adapter, rNBI_Setting_Jaguar, 0x000fe000, 0x5a >> 1);
-						PHY_SetBBReg(Adapter, rCSI_Mask_Setting1_Jaguar, BIT(0), 1);
-						PHY_SetBBReg(Adapter, rCSI_Fix_Mask0_Jaguar, bMaskDWord, 0);
-						PHY_SetBBReg(Adapter, rCSI_Fix_Mask1_Jaguar, bMaskDWord, 0);
-						PHY_SetBBReg(Adapter, rCSI_Fix_Mask6_Jaguar, BIT(16), 1);
-						PHY_SetBBReg(Adapter, rCSI_Fix_Mask7_Jaguar, bMaskDWord, 0);
+					if (pHalData->current_channel == 155) {
+						phy_set_bb_reg(Adapter, rNBI_Setting_Jaguar, 0x000fe000, 0x5a >> 1);
+						phy_set_bb_reg(Adapter, rCSI_Mask_Setting1_Jaguar, BIT(0), 1);
+						phy_set_bb_reg(Adapter, rCSI_Fix_Mask0_Jaguar, bMaskDWord, 0);
+						phy_set_bb_reg(Adapter, rCSI_Fix_Mask1_Jaguar, bMaskDWord, 0);
+						phy_set_bb_reg(Adapter, rCSI_Fix_Mask6_Jaguar, BIT(16), 1);
+						phy_set_bb_reg(Adapter, rCSI_Fix_Mask7_Jaguar, bMaskDWord, 0);
 						Reset_NBI_CSI = FALSE;
 					}
 			break;
@@ -2195,16 +2112,16 @@ VOID phy_SpurCalibration_8814A(PADAPTER	Adapter)
 	}
 	
 	if (Reset_NBI_CSI) {
-		PHY_SetBBReg(Adapter, rNBI_Setting_Jaguar, 0x000fe000, 0xfc >> 1);
-		PHY_SetBBReg(Adapter, rCSI_Mask_Setting1_Jaguar, BIT(0), 0);
-		PHY_SetBBReg(Adapter, rCSI_Fix_Mask0_Jaguar, bMaskDWord, 0);
-		PHY_SetBBReg(Adapter, rCSI_Fix_Mask1_Jaguar, bMaskDWord, 0);
-		PHY_SetBBReg(Adapter, rCSI_Fix_Mask6_Jaguar, bMaskDWord, 0);
-		PHY_SetBBReg(Adapter, rCSI_Fix_Mask7_Jaguar, bMaskDWord, 0);
+		phy_set_bb_reg(Adapter, rNBI_Setting_Jaguar, 0x000fe000, 0xfc >> 1);
+		phy_set_bb_reg(Adapter, rCSI_Mask_Setting1_Jaguar, BIT(0), 0);
+		phy_set_bb_reg(Adapter, rCSI_Fix_Mask0_Jaguar, bMaskDWord, 0);
+		phy_set_bb_reg(Adapter, rCSI_Fix_Mask1_Jaguar, bMaskDWord, 0);
+		phy_set_bb_reg(Adapter, rCSI_Fix_Mask6_Jaguar, bMaskDWord, 0);
+		phy_set_bb_reg(Adapter, rCSI_Fix_Mask7_Jaguar, bMaskDWord, 0);
 	}
 	
 	phydm_spur_nbi_setting_8814a(pDM_Odm);
-	/*DBG_871X("%s(),After RrNBI_Setting_Jaguar= %x\n", __func__, PHY_QueryBBReg(Adapter, rNBI_Setting_Jaguar, bMaskDWord));*/
+	/*RTW_INFO("%s(),After RrNBI_Setting_Jaguar= %x\n", __func__, phy_query_bb_reg(Adapter, rNBI_Setting_Jaguar, bMaskDWord));*/
 }
 
 
@@ -2212,7 +2129,7 @@ void phy_ModifyInitialGain_8814A(
 	PADAPTER		Adapter)
 {
 	HAL_DATA_TYPE	*pHalData = GET_HAL_DATA(Adapter);
-	u8 			channel = pHalData->CurrentChannel;
+	u8 			channel = pHalData->current_channel;
 	s1Byte		offset[4]; /*{A,B,C,D}*/
 	u8			i = 0;
 	u8			chnl_section = 0xff;
@@ -2227,7 +2144,7 @@ void phy_ModifyInitialGain_8814A(
 		chnl_section = 3; /*5GH*/
 
 	if (chnl_section > 3) {
-		DBG_871X("%s: worng channel section\n", __func__);
+		RTW_INFO("%s: worng channel section\n", __func__);
 		return;
 	}
 
@@ -2235,8 +2152,8 @@ void phy_ModifyInitialGain_8814A(
 		u1Byte	hex_offset;
 
 		hex_offset = (u1Byte)(pHalData->RxGainOffset[chnl_section] >> (12-4*i))&0x0f;
-		DBG_871X("%s: pHalData->RxGainOffset[%d] = %x\n", __func__, chnl_section, pHalData->RxGainOffset[chnl_section]);
-		DBG_871X("%s: hex_offset = %x\n", __func__, hex_offset);
+		RTW_INFO("%s: pHalData->RxGainOffset[%d] = %x\n", __func__, chnl_section, pHalData->RxGainOffset[chnl_section]);
+		RTW_INFO("%s: hex_offset = %x\n", __func__, hex_offset);
 
 		if (hex_offset == 0xf)
 			offset[i] = 0;
@@ -2245,8 +2162,8 @@ void phy_ModifyInitialGain_8814A(
 		else
 		 	offset[i] = 0x0 - hex_offset;
 		 offset[i] = (offset[i] / 2) * 2;
-		 DBG_871X("%s: offset[%d] = %x\n", __func__, i, offset[i]);
-		 DBG_871X("%s: BackUp_IG_REG_4_Chnl_Section[%d] = %x\n", __func__, i, pHalData->BackUp_IG_REG_4_Chnl_Section[i]);
+		 RTW_INFO("%s: offset[%d] = %x\n", __func__, i, offset[i]);
+		 RTW_INFO("%s: BackUp_IG_REG_4_Chnl_Section[%d] = %x\n", __func__, i, pHalData->BackUp_IG_REG_4_Chnl_Section[i]);
 	}
 
 	if (pHalData->BackUp_IG_REG_4_Chnl_Section[0] != 0 &&
@@ -2254,10 +2171,10 @@ void phy_ModifyInitialGain_8814A(
 		pHalData->BackUp_IG_REG_4_Chnl_Section[2] != 0 &&
 		pHalData->BackUp_IG_REG_4_Chnl_Section[3] != 0
 		) {
-		PHY_SetBBReg(Adapter, rA_IGI_Jaguar, 0x000000ff, pHalData->BackUp_IG_REG_4_Chnl_Section[0] + offset[0]);
-		PHY_SetBBReg(Adapter, rB_IGI_Jaguar, 0x000000ff, pHalData->BackUp_IG_REG_4_Chnl_Section[1] + offset[1]);
-		PHY_SetBBReg(Adapter, rC_IGI_Jaguar2, 0x000000ff, pHalData->BackUp_IG_REG_4_Chnl_Section[2] + offset[2]);
-		PHY_SetBBReg(Adapter, rD_IGI_Jaguar2, 0x000000ff, pHalData->BackUp_IG_REG_4_Chnl_Section[3] + offset[3]);
+		phy_set_bb_reg(Adapter, rA_IGI_Jaguar, 0x000000ff, pHalData->BackUp_IG_REG_4_Chnl_Section[0] + offset[0]);
+		phy_set_bb_reg(Adapter, rB_IGI_Jaguar, 0x000000ff, pHalData->BackUp_IG_REG_4_Chnl_Section[1] + offset[1]);
+		phy_set_bb_reg(Adapter, rC_IGI_Jaguar2, 0x000000ff, pHalData->BackUp_IG_REG_4_Chnl_Section[2] + offset[2]);
+		phy_set_bb_reg(Adapter, rD_IGI_Jaguar2, 0x000000ff, pHalData->BackUp_IG_REG_4_Chnl_Section[3] + offset[3]);
 	}
 }
 
@@ -2268,7 +2185,7 @@ VOID phy_SetBwMode8814A(PADAPTER	Adapter)
 	HAL_DATA_TYPE	*pHalData = GET_HAL_DATA(Adapter);
 
 	//3 Set Reg668 BW
-	phy_SetBwRegMac_8814A(Adapter, pHalData->CurrentChannelBW);
+	phy_SetBwRegMac_8814A(Adapter, pHalData->current_channel_bw);
 
 	//3 Set Reg483
 	SubChnlNum = phy_GetSecondaryChnl_8814A(Adapter);
@@ -2276,36 +2193,36 @@ VOID phy_SetBwMode8814A(PADAPTER	Adapter)
 
 	if(pHalData->rf_chip == RF_PSEUDO_11N)
 	{
-		DBG_871X("phy_SetBwMode8814A: return for PSEUDO \n");
+		RTW_INFO("phy_SetBwMode8814A: return for PSEUDO \n");
 		return;
 	}
 
 	//3 Set Reg8AC Reg8C4 Reg8C8
-	phy_SetBwRegAdc_8814A(Adapter, pHalData->CurrentBandType, pHalData->CurrentChannelBW);
+	phy_SetBwRegAdc_8814A(Adapter, pHalData->current_band_type, pHalData->current_channel_bw);
 	//3 Set Reg82C
-	phy_SetBwRegAgc_8814A(Adapter, pHalData->CurrentBandType, pHalData->CurrentChannelBW);
+	phy_SetBwRegAgc_8814A(Adapter, pHalData->current_band_type, pHalData->current_channel_bw);
 
 	//3 Set Reg848  RegA00
-	switch(pHalData->CurrentChannelBW)
+	switch(pHalData->current_channel_bw)
 	{
 		case CHANNEL_WIDTH_20:
 			break;
 
 		case CHANNEL_WIDTH_40:
-			PHY_SetBBReg(Adapter, rRFMOD_Jaguar, 0x3C, SubChnlNum);			// 0x8ac[5:2]=1/2
+			phy_set_bb_reg(Adapter, rRFMOD_Jaguar, 0x3C, SubChnlNum);			// 0x8ac[5:2]=1/2
 
 			if(SubChnlNum == VHT_DATA_SC_20_UPPER_OF_80MHZ)					// 0xa00[4]=1/0
-				PHY_SetBBReg(Adapter, rCCK_System_Jaguar, bCCK_System_Jaguar, 1);
+				phy_set_bb_reg(Adapter, rCCK_System_Jaguar, bCCK_System_Jaguar, 1);
 			else
-				PHY_SetBBReg(Adapter, rCCK_System_Jaguar, bCCK_System_Jaguar, 0);
+				phy_set_bb_reg(Adapter, rCCK_System_Jaguar, bCCK_System_Jaguar, 0);
 			break;
 
 		case CHANNEL_WIDTH_80:
-			PHY_SetBBReg(Adapter, rRFMOD_Jaguar, 0x3C, SubChnlNum);			// 0x8ac[5:2]=1/2/3/4/9/10
+			phy_set_bb_reg(Adapter, rRFMOD_Jaguar, 0x3C, SubChnlNum);			// 0x8ac[5:2]=1/2/3/4/9/10
 			break;
 
 		default:
-			DBG_871X("%s():unknown Bandwidth:%#X\n", __func__, pHalData->CurrentChannelBW);
+			RTW_INFO("%s():unknown Bandwidth:%#X\n", __func__, pHalData->current_channel_bw);
 			break;
 	}
 	
@@ -2317,7 +2234,7 @@ if (Adapter->registrypriv.mp_mode == 1) {
 }
 #endif	
 	/* 3 Set RF related register */
-	PHY_RF6052SetBandwidth8814A(Adapter, pHalData->CurrentChannelBW);
+	PHY_RF6052SetBandwidth8814A(Adapter, pHalData->current_channel_bw);
 
 	phy_ADC_CLK_8814A(Adapter);
 	phy_SpurCalibration_8814A(Adapter);
@@ -2329,7 +2246,7 @@ if (Adapter->registrypriv.mp_mode == 1) {
 
 // <YuChen, 140529> Add for KFree Feature Requested by RF David.
 // We need support ABCD four path Kfree
-
+#if 0 /* no equivalent in 5.2.20... maybe not needed */
 VOID
 phy_SetKfreeToRF_8814A(
 	IN	PADAPTER			Adapter,
@@ -2338,65 +2255,65 @@ phy_SetKfreeToRF_8814A(
 	)
 {
 	HAL_DATA_TYPE	*pHalData = GET_HAL_DATA(GetDefaultAdapter(Adapter));	
-	PDM_ODM_T	pDM_Odm = &pHalData->odmpriv;
+	struct dm_struct		*	pDM_Odm = &pHalData->odmpriv;
 	BOOLEAN bOdd;
-	PODM_RF_CAL_T	pRFCalibrateInfo = &(pDM_Odm->RFCalibrateInfo);
+	struct dm_rf_calibration_struct	*	pRFCalibrateInfo = &(pDM_Odm->RFCalibrateInfo);
 	if((Data%2) != 0)		//odd -> positive
 	{
 		Data = Data - 1;
-		PHY_SetRFReg(Adapter, eRFPath, rRF_TxGainOffset, BIT19, 1);
+		phy_set_rf_reg(Adapter, eRFPath, rRF_TxGainOffset, BIT19, 1);
 		bOdd = TRUE;
 	}
 	else		// even -> negative
 	{
-		PHY_SetRFReg(Adapter, eRFPath, rRF_TxGainOffset, BIT19, 0);
+		phy_set_rf_reg(Adapter, eRFPath, rRF_TxGainOffset, BIT19, 0);
 		bOdd = FALSE;
 	}
 	RT_TRACE(COMP_MP, DBG_LOUD, ("phy_ConfigKFree8814A(): RF_0x55[19]= %d\n", bOdd));
 	switch(Data)
 	{
 		case 2:
-			PHY_SetRFReg(Adapter, eRFPath, rRF_TxGainOffset, BIT14, 1);
+			phy_set_rf_reg(Adapter, eRFPath, rRF_TxGainOffset, BIT14, 1);
 			pRFCalibrateInfo->KfreeOffset[eRFPath] = 0;
 		break;
 		case 4:
-			PHY_SetRFReg(Adapter, eRFPath, rRF_TxGainOffset, BIT17|BIT16|BIT15, 1);
+			phy_set_rf_reg(Adapter, eRFPath, rRF_TxGainOffset, BIT17|BIT16|BIT15, 1);
 			pRFCalibrateInfo->KfreeOffset[eRFPath] = 1;
 		break;
 		case 6:
-			PHY_SetRFReg(Adapter, eRFPath, rRF_TxGainOffset, BIT14, 1);
-			PHY_SetRFReg(Adapter, eRFPath, rRF_TxGainOffset, BIT17|BIT16|BIT15, 1);
+			phy_set_rf_reg(Adapter, eRFPath, rRF_TxGainOffset, BIT14, 1);
+			phy_set_rf_reg(Adapter, eRFPath, rRF_TxGainOffset, BIT17|BIT16|BIT15, 1);
 			pRFCalibrateInfo->KfreeOffset[eRFPath] = 1;
 		break;
 		case 8:
-			PHY_SetRFReg(Adapter, eRFPath, rRF_TxGainOffset, BIT17|BIT16|BIT15, 2);
+			phy_set_rf_reg(Adapter, eRFPath, rRF_TxGainOffset, BIT17|BIT16|BIT15, 2);
 			pRFCalibrateInfo->KfreeOffset[eRFPath] = 2;
 		break;
 		case 10:
-			PHY_SetRFReg(Adapter, eRFPath, rRF_TxGainOffset, BIT14, 1);
-			PHY_SetRFReg(Adapter, eRFPath, rRF_TxGainOffset, BIT17|BIT16|BIT15, 2);
+			phy_set_rf_reg(Adapter, eRFPath, rRF_TxGainOffset, BIT14, 1);
+			phy_set_rf_reg(Adapter, eRFPath, rRF_TxGainOffset, BIT17|BIT16|BIT15, 2);
 			pRFCalibrateInfo->KfreeOffset[eRFPath] = 2;
 		break;
 		case 12:
-			PHY_SetRFReg(Adapter, eRFPath, rRF_TxGainOffset, BIT17|BIT16|BIT15, 3);
+			phy_set_rf_reg(Adapter, eRFPath, rRF_TxGainOffset, BIT17|BIT16|BIT15, 3);
 			pRFCalibrateInfo->KfreeOffset[eRFPath] = 3;
 		break;
 		case 14:
-			PHY_SetRFReg(Adapter, eRFPath, rRF_TxGainOffset, BIT14, 1);
-			PHY_SetRFReg(Adapter, eRFPath, rRF_TxGainOffset, BIT17|BIT16|BIT15, 3);
+			phy_set_rf_reg(Adapter, eRFPath, rRF_TxGainOffset, BIT14, 1);
+			phy_set_rf_reg(Adapter, eRFPath, rRF_TxGainOffset, BIT17|BIT16|BIT15, 3);
 			pRFCalibrateInfo->KfreeOffset[eRFPath] = 3;
 		break;
 		case 16:
-			PHY_SetRFReg(Adapter, eRFPath, rRF_TxGainOffset, BIT17|BIT16|BIT15, 4);
+			phy_set_rf_reg(Adapter, eRFPath, rRF_TxGainOffset, BIT17|BIT16|BIT15, 4);
 			pRFCalibrateInfo->KfreeOffset[eRFPath] = 4;
 		break;
 		case 18:
-			PHY_SetRFReg(Adapter, eRFPath, rRF_TxGainOffset, BIT14, 1);
-			PHY_SetRFReg(Adapter, eRFPath, rRF_TxGainOffset, BIT17|BIT16|BIT15, 4);
+			phy_set_rf_reg(Adapter, eRFPath, rRF_TxGainOffset, BIT14, 1);
+			phy_set_rf_reg(Adapter, eRFPath, rRF_TxGainOffset, BIT17|BIT16|BIT15, 4);
 			pRFCalibrateInfo->KfreeOffset[eRFPath] = 4;
 		break;
 		case 20:
-			PHY_SetRFReg(Adapter, eRFPath, rRF_TxGainOffset, BIT17|BIT16|BIT15, 5);
+			phy_set_rf_reg(Adapter, eRFPath, rRF_TxGainOffset, BIT17|BIT16|BIT15, 5);
 			pRFCalibrateInfo->KfreeOffset[eRFPath] = 5;
 		break;
 
@@ -2428,19 +2345,19 @@ phy_ConfigKFree8814A(
 	u8			targetval_D = 0xFF;
 	HAL_DATA_TYPE	*pHalData = GET_HAL_DATA(Adapter);
 	
-	//DBG_871X("===>phy_ConfigKFree8814A()\n");
+	//RTW_INFO("===>phy_ConfigKFree8814A()\n");
 	
-	if (Adapter->registrypriv.RegRfKFreeEnable == 2)
+	if (Adapter->registrypriv.RegPwrTrimEnable == 2)
 	{
-		//DBG_871X("phy_ConfigKFree8814A(): RegRfKFreeEnable == 2, Disable \n");
+		//RTW_INFO("phy_ConfigKFree8814A(): RegPwrTrimEnable == 2, Disable \n");
 		return;
 	}
-	else if (Adapter->registrypriv.RegRfKFreeEnable == 1 || Adapter->registrypriv.RegRfKFreeEnable == 0)
+	else if (Adapter->registrypriv.RegPwrTrimEnable == 1 || Adapter->registrypriv.RegPwrTrimEnable == 0)
 	{
-		DBG_871X("phy_ConfigKFree8814A(): RegRfKFreeEnable == TRUE \n");
+		RTW_INFO("phy_ConfigKFree8814A(): RegPwrTrimEnable == TRUE \n");
 		if (bandType == BAND_ON_2_4G) // 2G
 		{
-			DBG_871X("phy_ConfigKFree8814A(): bandType == BAND_ON_2_4G, channelToSW= %d  \n", channelToSW);
+			RTW_INFO("phy_ConfigKFree8814A(): bandType == BAND_ON_2_4G, channelToSW= %d  \n", channelToSW);
 			if (channelToSW <= 14 && channelToSW >= 1)
 			{
 				efuse_OneByteRead(Adapter, 0x3F4, &targetval_A, FALSE);	// for Path A and B
@@ -2450,7 +2367,7 @@ phy_ConfigKFree8814A(
 		}
 		else if (bandType == BAND_ON_5G)
 		{
-			DBG_871X("phy_ConfigKFree8814A(): bandType == BAND_ON_5G, channelToSW= %d  \n", channelToSW);
+			RTW_INFO("phy_ConfigKFree8814A(): bandType == BAND_ON_5G, channelToSW= %d  \n", channelToSW);
 			if (channelToSW >= 36 && channelToSW < 50) // 5GLB_1
 			{
 				efuse_OneByteRead(Adapter, 0x3E0, &targetval_A, FALSE);
@@ -2487,35 +2404,35 @@ phy_ConfigKFree8814A(
 				efuse_OneByteRead(Adapter, 0x3F3, &targetval_D, FALSE);
 			}
 		}
-		DBG_871X("phy_ConfigKFree8814A(): targetval_A= %#x \n", targetval_A);
-		DBG_871X("phy_ConfigKFree8814A(): targetval_B= %#x \n", targetval_B);
-		DBG_871X("phy_ConfigKFree8814A(): targetval_C= %#x \n", targetval_C);
-		DBG_871X("phy_ConfigKFree8814A(): targetval_D= %#x \n", targetval_D);
+		RTW_INFO("phy_ConfigKFree8814A(): targetval_A= %#x \n", targetval_A);
+		RTW_INFO("phy_ConfigKFree8814A(): targetval_B= %#x \n", targetval_B);
+		RTW_INFO("phy_ConfigKFree8814A(): targetval_C= %#x \n", targetval_C);
+		RTW_INFO("phy_ConfigKFree8814A(): targetval_D= %#x \n", targetval_D);
 		
 		// Make sure the targetval is defined
-		if ((Adapter->registrypriv.RegRfKFreeEnable == 1) && ((targetval_A != 0xFF) || (pHalData->RfKFreeEnable == TRUE)))
+		if ((Adapter->registrypriv.RegPwrTrimEnable == 1) && ((targetval_A != 0xFF) || (pHalData->RfKFreeEnable == TRUE)))
 		{
 			if (bandType == BAND_ON_2_4G) // 2G
 			{
 				RT_TRACE(COMP_MP, DBG_LOUD, ("phy_ConfigKFree8814A(): PATH_A: %#x \n", targetval_A&0x0F));
-				phy_SetKfreeToRF_8814A(Adapter, ODM_RF_PATH_A, targetval_A&0x0F);
+				phy_SetKfreeToRF_8814A(Adapter, RF_PATH_A, targetval_A&0x0F);
 				RT_TRACE(COMP_MP, DBG_LOUD, ("phy_ConfigKFree8814A(): PATH_B: %#x \n", (targetval_A&0xF0)>>4));
-				phy_SetKfreeToRF_8814A(Adapter, ODM_RF_PATH_B, (targetval_A&0xF0)>>4);
+				phy_SetKfreeToRF_8814A(Adapter, RF_PATH_B, (targetval_A&0xF0)>>4);
 				RT_TRACE(COMP_MP, DBG_LOUD, ("phy_ConfigKFree8814A(): PATH_C: %#x \n", targetval_B&0x0F));
-				phy_SetKfreeToRF_8814A(Adapter, ODM_RF_PATH_C, targetval_B&0x0F);
+				phy_SetKfreeToRF_8814A(Adapter, RF_PATH_C, targetval_B&0x0F);
 				RT_TRACE(COMP_MP, DBG_LOUD, ("phy_ConfigKFree8814A(): PATH_D: %#x \n", (targetval_B&0xF0)>>4));
-				phy_SetKfreeToRF_8814A(Adapter, ODM_RF_PATH_D, (targetval_B&0xF0)>>4);
+				phy_SetKfreeToRF_8814A(Adapter, RF_PATH_D, (targetval_B&0xF0)>>4);
 			}
 			else if(bandType == BAND_ON_5G)
 			{
 				RT_TRACE(COMP_MP, DBG_LOUD, ("phy_ConfigKFree8814A(): PATH_A: %#x \n", targetval_A&0x1F));
-				phy_SetKfreeToRF_8814A(Adapter, ODM_RF_PATH_A, targetval_A&0x1F);
+				phy_SetKfreeToRF_8814A(Adapter, RF_PATH_A, targetval_A&0x1F);
 				RT_TRACE(COMP_MP, DBG_LOUD, ("phy_ConfigKFree8814A(): PATH_B: %#x \n", targetval_B&0x1F));
-				phy_SetKfreeToRF_8814A(Adapter, ODM_RF_PATH_B, targetval_B&0x1F);
+				phy_SetKfreeToRF_8814A(Adapter, RF_PATH_B, targetval_B&0x1F);
 				RT_TRACE(COMP_MP, DBG_LOUD, ("phy_ConfigKFree8814A(): PATH_C: %#x \n", targetval_C&0x1F));
-				phy_SetKfreeToRF_8814A(Adapter, ODM_RF_PATH_C, targetval_C&0x1F);
+				phy_SetKfreeToRF_8814A(Adapter, RF_PATH_C, targetval_C&0x1F);
 				RT_TRACE(COMP_MP, DBG_LOUD, ("phy_ConfigKFree8814A(): PATH_D: %#x \n", targetval_D&0x1F));
-				phy_SetKfreeToRF_8814A(Adapter, ODM_RF_PATH_D, targetval_D&0x1F);
+				phy_SetKfreeToRF_8814A(Adapter, RF_PATH_D, targetval_D&0x1F);
 			}
 		}
 		else
@@ -2526,7 +2443,7 @@ phy_ConfigKFree8814A(
 	}
 	RT_TRACE(COMP_MP, DBG_LOUD, ("<===phy_ConfigKFree8814A()\n"));
 }
-
+#endif 
 VOID
 phy_SwChnl8814A(	
 	IN	PADAPTER					pAdapter
@@ -2537,19 +2454,19 @@ phy_SwChnl8814A(
 #ifdef CONFIG_RF_GAIN_OFFSET
 	struct kfree_data_t *kfree_data = &pHalData->kfree_data;
 #endif
-	u8 			channelToSW = pHalData->CurrentChannel;
+	u8 			channelToSW = pHalData->current_channel;
 	u32			RFValToWR , RFTmpVal, BitShift, BitMask;
 	  
-	//DBG_871X("[BW:CHNL], phy_SwChnl8814A(), switch to channel %d !!\n", channelToSW);
+	//RTW_INFO("[BW:CHNL], phy_SwChnl8814A(), switch to channel %d !!\n", channelToSW);
 
 	if (phy_SwBand8814A(pAdapter, channelToSW) == FALSE)
 	{
-		DBG_871X("error Chnl %d", channelToSW);
+		RTW_INFO("error Chnl %d", channelToSW);
 	}
 
 	if(pHalData->rf_chip == RF_PSEUDO_11N)
 	{
-		RT_TRACE(COMP_MLME, DBG_LOUD, ("phy_SwChnl8814A: return for PSEUDO\n"));
+		RTW_DBG("phy_SwChnl8814A: return for PSEUDO\n");
 		return;
 	}
 	
@@ -2561,9 +2478,9 @@ phy_SwChnl8814A(
 	#if 0
 		if (pHalData->RfKFree_ch_group != channelIdx) {
 			/* Todo: wait for new phydm ready */
-			phy_ConfigKFree8814A(pAdapter, channelToSW, pHalData->CurrentBandType);
+			phy_ConfigKFree8814A(pAdapter, channelToSW, pHalData->current_band_type);
 			phydm_ConfigKFree(pDM_Odm, channelToSW, kfree_data->bb_gain);
-			DBG_871X("RfKFree_ch_group =%d\n", channelIdx);
+			RTW_INFO("RfKFree_ch_group =%d\n", channelIdx);
 		}
 	#endif
 
@@ -2579,15 +2496,15 @@ phy_SwChnl8814A(
 	{
 		// fc_area		
 		if (36 <= channelToSW && channelToSW <= 48) 
-			PHY_SetBBReg(pAdapter, rFc_area_Jaguar, 0x1ffe0000, 0x494); 
+			phy_set_bb_reg(pAdapter, rFc_area_Jaguar, 0x1ffe0000, 0x494); 
 		else if (50 <= channelToSW && channelToSW <= 64) 
-			PHY_SetBBReg(pAdapter, rFc_area_Jaguar, 0x1ffe0000, 0x453);  
+			phy_set_bb_reg(pAdapter, rFc_area_Jaguar, 0x1ffe0000, 0x453);  
 		else if (100 <= channelToSW && channelToSW <= 116) 
-			PHY_SetBBReg(pAdapter, rFc_area_Jaguar, 0x1ffe0000, 0x452);  
+			phy_set_bb_reg(pAdapter, rFc_area_Jaguar, 0x1ffe0000, 0x452);  
 		else if (118 <= channelToSW) 
-			PHY_SetBBReg(pAdapter, rFc_area_Jaguar, 0x1ffe0000, 0x412);  
+			phy_set_bb_reg(pAdapter, rFc_area_Jaguar, 0x1ffe0000, 0x412);  
 		else
-			PHY_SetBBReg(pAdapter, rFc_area_Jaguar, 0x1ffe0000, 0x96a);
+			phy_set_bb_reg(pAdapter, rFc_area_Jaguar, 0x1ffe0000, 0x96a);
 
 		for(eRFPath = 0; eRFPath < pHalData->NumTotalRFPath; eRFPath++)
 		{
@@ -2608,15 +2525,15 @@ phy_SwChnl8814A(
 
 			BitMask = BIT18|BIT17|BIT16|BIT9|BIT8|bMaskByte0;
 
-			PHY_SetRFReg(pAdapter, eRFPath, RF_CHNLBW_Jaguar, BitMask, RFTmpVal);
+			phy_set_rf_reg(pAdapter, eRFPath, RF_CHNLBW_Jaguar, BitMask, RFTmpVal);
 		}
 
 		if (36 <= channelToSW && channelToSW <= 64)				// Band 1 & Band 2
-			PHY_SetBBReg(pAdapter, rAGC_table_Jaguar2, 0x1F, 1);	// 0x958[4:0] = 0x1
+			phy_set_bb_reg(pAdapter, rAGC_table_Jaguar2, 0x1F, 1);	// 0x958[4:0] = 0x1
 		else if (100 <= channelToSW && channelToSW <= 144) 			// Band 3
-			PHY_SetBBReg(pAdapter, rAGC_table_Jaguar2, 0x1F, 2);	// 0x958[4:0] = 0x2
+			phy_set_bb_reg(pAdapter, rAGC_table_Jaguar2, 0x1F, 2);	// 0x958[4:0] = 0x2
 		else	if(channelToSW >= 149)								// Band 4
-			PHY_SetBBReg(pAdapter, rAGC_table_Jaguar2, 0x1F, 3);	// 0x958[4:0] = 0x3
+			phy_set_bb_reg(pAdapter, rAGC_table_Jaguar2, 0x1F, 3);	// 0x958[4:0] = 0x3
 	}
 
 	if (pAdapter->registrypriv.mp_mode == 1) {
@@ -2628,17 +2545,17 @@ phy_SwChnl8814A(
 	
 	/* 2.4G CCK TX DFIR  */
 	if (channelToSW >= 1 && channelToSW <= 11) {
-		PHY_SetBBReg(pAdapter, rCCK0_TxFilter1, bMaskDWord, 0x1a1b0030);
-		PHY_SetBBReg(pAdapter, rCCK0_TxFilter2, bMaskDWord, 0x090e1317);
-		PHY_SetBBReg(pAdapter, rCCK0_DebugPort, bMaskDWord, 0x00000204);
+		phy_set_bb_reg(pAdapter, rCCK0_TxFilter1, bMaskDWord, 0x1a1b0030);
+		phy_set_bb_reg(pAdapter, rCCK0_TxFilter2, bMaskDWord, 0x090e1317);
+		phy_set_bb_reg(pAdapter, rCCK0_DebugPort, bMaskDWord, 0x00000204);
 	} else if (channelToSW >= 12 && channelToSW <= 13) {
-		PHY_SetBBReg(pAdapter, rCCK0_TxFilter1, bMaskDWord, 0x1a1b0030);
-		PHY_SetBBReg(pAdapter, rCCK0_TxFilter2, bMaskDWord, 0x090e1217);
-		PHY_SetBBReg(pAdapter, rCCK0_DebugPort, bMaskDWord, 0x00000305);
+		phy_set_bb_reg(pAdapter, rCCK0_TxFilter1, bMaskDWord, 0x1a1b0030);
+		phy_set_bb_reg(pAdapter, rCCK0_TxFilter2, bMaskDWord, 0x090e1217);
+		phy_set_bb_reg(pAdapter, rCCK0_DebugPort, bMaskDWord, 0x00000305);
 	} else if (channelToSW == 14) {
-		PHY_SetBBReg(pAdapter, rCCK0_TxFilter1, bMaskDWord, 0x1a1b0030);
-		PHY_SetBBReg(pAdapter, rCCK0_TxFilter2, bMaskDWord, 0x00000E17);
-		PHY_SetBBReg(pAdapter, rCCK0_DebugPort, bMaskDWord, 0x00000000);
+		phy_set_bb_reg(pAdapter, rCCK0_TxFilter1, bMaskDWord, 0x1a1b0030);
+		phy_set_bb_reg(pAdapter, rCCK0_TxFilter2, bMaskDWord, 0x00000E17);
+		phy_set_bb_reg(pAdapter, rCCK0_DebugPort, bMaskDWord, 0x00000000);
 	}
 
 }
@@ -2652,7 +2569,7 @@ PHY_SwChnlTimerCallback8814A(
 	PADAPTER		pAdapter = (PADAPTER)pTimer->Adapter;
 	HAL_DATA_TYPE	*pHalData = GET_HAL_DATA(pAdapter);
 	
-	RT_TRACE(COMP_SCAN, DBG_LOUD, ("==>PHY_SwChnlTimerCallback8814A(), switch to channel %d\n", pHalData->CurrentChannel));
+	RT_TRACE(COMP_SCAN, DBG_LOUD, ("==>PHY_SwChnlTimerCallback8814A(), switch to channel %d\n", pHalData->current_channel));
 	
 	if (rtw_is_drv_stopped(padapter))
 		return;
@@ -2685,7 +2602,7 @@ PHY_SwChnlWorkItemCallback8814A(
 {
 	PADAPTER		pAdapter = (PADAPTER)pContext;
 	HAL_DATA_TYPE	*pHalData = GET_HAL_DATA(pAdapter);
-	RT_TRACE(COMP_SCAN, DBG_LOUD, ("==>PHY_SwChnlWorkItemCallback8814A(), switch to channel %d\n", pHalData->CurrentChannel));
+	RT_TRACE(COMP_SCAN, DBG_LOUD, ("==>PHY_SwChnlWorkItemCallback8814A(), switch to channel %d\n", pHalData->current_channel));
 
 	if(pAdapter->bInSetPower && RT_USB_CANNOT_IO(pAdapter))
 	{
@@ -2714,7 +2631,7 @@ PHY_SwChnlWorkItemCallback8814A(
 	pHalData->SwChnlInProgress=FALSE;
 	PlatformReleaseSpinLock(pAdapter, RT_CHANNEL_AND_BANDWIDTH_SPINLOCK);
 	
-	RT_TRACE(COMP_P2P, DBG_LOUD, ("PHY_SwChnlWorkItemCallback8814A(), switch to channel %d\n", pHalData->CurrentChannel));
+	RT_TRACE(COMP_P2P, DBG_LOUD, ("PHY_SwChnlWorkItemCallback8814A(), switch to channel %d\n", pHalData->current_channel));
 	RT_TRACE(COMP_SCAN, DBG_LOUD, ("<==PHY_SwChnlWorkItemCallback8814A()\n"));
 }
 
@@ -2728,7 +2645,7 @@ HAL_HandleSwChnl8814A(	// Call after initialization
 	PADAPTER Adapter =  GetDefaultAdapter(pAdapter);
 	HAL_DATA_TYPE	*pHalData = GET_HAL_DATA(Adapter);
 	RT_TRACE(COMP_SCAN | COMP_RM, DBG_LOUD, ("HAL_HandleSwChnl8814A()===>\n"));
-	pHalData->CurrentChannel = channel;
+	pHalData->current_channel = channel;
 	phy_SwChnl8814A(Adapter);
 
 
@@ -2747,17 +2664,17 @@ phy_SwChnlAndSetBwMode8814A(
 )
 {
 	HAL_DATA_TYPE		*pHalData = GET_HAL_DATA(Adapter);
-	PDM_ODM_T		pDM_Odm = &pHalData->odmpriv;
+	struct dm_struct		*		pDM_Odm = &pHalData->odmpriv;
 
-	//DBG_871X("phy_SwChnlAndSetBwMode8814A(): bSwChnl %d, bSetChnlBW %d \n", pHalData->bSwChnl, pHalData->bSetChnlBW);
+	//RTW_INFO("phy_SwChnlAndSetBwMode8814A(): bSwChnl %d, bSetChnlBW %d \n", pHalData->bSwChnl, pHalData->bSetChnlBW);
 	if ( Adapter->bNotifyChannelChange )
 	{
-		DBG_871X( "[%s] bSwChnl=%d, ch=%d, bSetChnlBW=%d, bw=%d\n", 
+		RTW_INFO( "[%s] bSwChnl=%d, ch=%d, bSetChnlBW=%d, bw=%d\n", 
 			__FUNCTION__, 
 			pHalData->bSwChnl,
-			pHalData->CurrentChannel,
+			pHalData->current_channel,
 			pHalData->bSetChnlBW,
-			pHalData->CurrentChannelBW);
+			pHalData->current_channel_bw);
 	}
 	
 	if (RTW_CANNOT_RUN(Adapter)) {
@@ -2778,20 +2695,20 @@ phy_SwChnlAndSetBwMode8814A(
 	}	
 
 	if (Adapter->registrypriv.mp_mode == 0) {
-		ODM_ClearTxPowerTrackingState(pDM_Odm);
-		PHY_SetTxPowerLevel8814(Adapter, pHalData->CurrentChannel);
+		odm_clear_txpowertracking_state(pDM_Odm);
+		PHY_SetTxPowerLevel8814(Adapter, pHalData->current_channel);
 		if (pHalData->bNeedIQK == _TRUE) {
-			PHY_IQCalibrate_8814A(pDM_Odm, _FALSE);
+			phy_iq_calibrate_8814a(pDM_Odm, _FALSE);
 			pHalData->bNeedIQK = _FALSE;
 		}
 	} else
-		PHY_IQCalibrate_8814A(pDM_Odm, _FALSE);
+		phy_iq_calibrate_8814a(pDM_Odm, _FALSE);
 #if 0 //todo
 #if (AUTO_CHNL_SEL_NHM == 1)	
 	if(IS_AUTO_CHNL_SUPPORT(Adapter) && 
-		P2PIsSocialChannel(pHalData->CurrentChannel))
+		P2PIsSocialChannel(pHalData->current_channel))
 	{	
-		RT_TRACE(COMP_SCAN, DBG_TRACE, ("[ACS] phy_SwChnlAndSetBwMode8723B(): CurrentChannel %d Reset NHM counter!!\n", pHalData->CurrentChannel));
+		RT_TRACE(COMP_SCAN, DBG_TRACE, ("[ACS] phy_SwChnlAndSetBwMode8723B(): current_channel %d Reset NHM counter!!\n", pHalData->current_channel));
 		RT_TRACE(COMP_SCAN, DBG_TRACE, ("[ACS] phy_SwChnlAndSetBwMode8723B(): AutoChnlSelPeriod(%d)\n", 
 			GetDefaultAdapter(Adapter)->MgntInfo.AutoChnlSel.AutoChnlSelPeriod));
 
@@ -2833,7 +2750,7 @@ PHY_SwChnlSynchronously8814A(	// Only called during initialize
 {
 	HAL_DATA_TYPE	*pHalData = GET_HAL_DATA(Adapter);
 
-	RT_TRACE(COMP_SCAN | COMP_RM, DBG_LOUD, ("==>PHY_SwChnlSynchronously(), switch from channel %d to channel %d.\n", pHalData->CurrentChannel, channel));
+	RT_TRACE(COMP_SCAN | COMP_RM, DBG_LOUD, ("==>PHY_SwChnlSynchronously(), switch from channel %d to channel %d.\n", pHalData->current_channel, channel));
 
 	// Cannot IO.
 	if(RT_CANNOT_IO(Adapter))
@@ -2885,11 +2802,11 @@ PHY_SwChnlSynchronously8814A(	// Only called during initialize
 
 	pHalData->bSwChnl = TRUE;
 	pHalData->bSetChnlBW = FALSE;
-	pHalData->CurrentChannel=channel;
+	pHalData->current_channel=channel;
 
 	phy_SwChnlAndSetBwMode8814A(Adapter);
 
-	RT_TRACE(COMP_SCAN | COMP_RM, DBG_LOUD, ("<==PHY_SwChnlSynchronously(), switch from channel %d to channel %d.\n", pHalData->CurrentChannel, channel));
+	RT_TRACE(COMP_SCAN | COMP_RM, DBG_LOUD, ("<==PHY_SwChnlSynchronously(), switch from channel %d to channel %d.\n", pHalData->current_channel, channel));
 	
 }
 */
@@ -2900,7 +2817,7 @@ PHY_HandleSwChnlAndSetBW8814A(
 	IN	BOOLEAN				bSwitchChannel,
 	IN	BOOLEAN				bSetBandWidth,
 	IN	u8					ChannelNum,
-	IN	CHANNEL_WIDTH		ChnlWidth,
+	enum channel_width		ChnlWidth,
 	IN	u8					ChnlOffsetOf40MHz,
 	IN	u8					ChnlOffsetOf80MHz,
 	IN	u8					CenterFrequencyIndex1
@@ -2908,8 +2825,8 @@ PHY_HandleSwChnlAndSetBW8814A(
 {
 	PADAPTER  			pDefAdapter =  GetDefaultAdapter(Adapter);
 	PHAL_DATA_TYPE		pHalData = GET_HAL_DATA(pDefAdapter);
-	u8					tmpChannel = pHalData->CurrentChannel;
-	CHANNEL_WIDTH		tmpBW= pHalData->CurrentChannelBW;
+	u8					tmpChannel = pHalData->current_channel;
+	enum channel_width		tmpBW= pHalData->current_channel_bw;
 	u8					tmpnCur40MhzPrimeSC = pHalData->nCur40MhzPrimeSC;
 	u8					tmpnCur80MhzPrimeSC = pHalData->nCur80MhzPrimeSC;
 	u8					tmpCenterFrequencyIndex1 =pHalData->CurrentCenterFrequencyIndex1;
@@ -2918,14 +2835,14 @@ PHY_HandleSwChnlAndSetBW8814A(
 	//check is swchnl or setbw
 	if(!bSwitchChannel && !bSetBandWidth)
 	{
-		DBG_871X("PHY_HandleSwChnlAndSetBW8812:  not switch channel and not set bandwidth \n");
+		RTW_INFO("PHY_HandleSwChnlAndSetBW8812:  not switch channel and not set bandwidth \n");
 		return;
 	}
 
 	//skip change for channel or bandwidth is the same
 	if(bSwitchChannel)
 	{
-		if(pHalData->CurrentChannel != ChannelNum)
+		if(pHalData->current_channel != ChannelNum)
 		{
 			if (HAL_IsLegalChannel(Adapter, ChannelNum))
 				pHalData->bSwChnl = _TRUE;
@@ -2941,7 +2858,7 @@ PHY_HandleSwChnlAndSetBW8814A(
 			pHalData->bChnlBWInitialized = _TRUE;
 			pHalData->bSetChnlBW = _TRUE;
 		}
-		else if((pHalData->CurrentChannelBW != ChnlWidth) ||
+		else if((pHalData->current_channel_bw != ChnlWidth) ||
 			(pHalData->nCur40MhzPrimeSC != ChnlOffsetOf40MHz) || 
 			(pHalData->nCur80MhzPrimeSC != ChnlOffsetOf80MHz) ||
 			(pHalData->CurrentCenterFrequencyIndex1!= CenterFrequencyIndex1))
@@ -2952,21 +2869,21 @@ PHY_HandleSwChnlAndSetBW8814A(
 
 	if(!pHalData->bSetChnlBW && !pHalData->bSwChnl)
 	{
-		//DBG_871X("<= PHY_HandleSwChnlAndSetBW8812: bSwChnl %d, bSetChnlBW %d \n",pHalData->bSwChnl,pHalData->bSetChnlBW);
+		//RTW_INFO("<= PHY_HandleSwChnlAndSetBW8812: bSwChnl %d, bSetChnlBW %d \n",pHalData->bSwChnl,pHalData->bSetChnlBW);
 		return;
 	}
 
 
 	if(pHalData->bSwChnl)
 	{
-		pHalData->CurrentChannel=ChannelNum;
+		pHalData->current_channel=ChannelNum;
 		pHalData->CurrentCenterFrequencyIndex1 = ChannelNum;
 	}
 	
 
 	if(pHalData->bSetChnlBW)
 	{
-		pHalData->CurrentChannelBW = ChnlWidth;
+		pHalData->current_channel_bw = ChnlWidth;
 #if 0
 		if(ExtChnlOffsetOf40MHz==EXTCHNL_OFFSET_LOWER)
 			pHalData->nCur40MhzPrimeSC = HAL_PRIME_CHNL_OFFSET_UPPER;
@@ -2995,23 +2912,23 @@ PHY_HandleSwChnlAndSetBW8814A(
 	else {
 		if(pHalData->bSwChnl)
 		{
-			pHalData->CurrentChannel = tmpChannel;
+			pHalData->current_channel = tmpChannel;
 			pHalData->CurrentCenterFrequencyIndex1 = tmpChannel;
 		}	
 		if(pHalData->bSetChnlBW)
 		{
-			pHalData->CurrentChannelBW = tmpBW;
+			pHalData->current_channel_bw = tmpBW;
 			pHalData->nCur40MhzPrimeSC = tmpnCur40MhzPrimeSC;
 			pHalData->nCur80MhzPrimeSC = tmpnCur80MhzPrimeSC;
 			pHalData->CurrentCenterFrequencyIndex1 = tmpCenterFrequencyIndex1;
 		}
 	}
 
-	//DBG_871X("Channel %d ChannelBW %d ",pHalData->CurrentChannel, pHalData->CurrentChannelBW);
-	//DBG_871X("40MhzPrimeSC %d 80MhzPrimeSC %d ",pHalData->nCur40MhzPrimeSC, pHalData->nCur80MhzPrimeSC);
-	//DBG_871X("CenterFrequencyIndex1 %d \n",pHalData->CurrentCenterFrequencyIndex1);
+	//RTW_INFO("Channel %d ChannelBW %d ",pHalData->current_channel, pHalData->current_channel_bw);
+	//RTW_INFO("40MhzPrimeSC %d 80MhzPrimeSC %d ",pHalData->nCur40MhzPrimeSC, pHalData->nCur80MhzPrimeSC);
+	//RTW_INFO("CenterFrequencyIndex1 %d \n",pHalData->CurrentCenterFrequencyIndex1);
 
-	//DBG_871X("<= PHY_HandleSwChnlAndSetBW8812: bSwChnl %d, bSetChnlBW %d \n",pHalData->bSwChnl,pHalData->bSetChnlBW);
+	//RTW_INFO("<= PHY_HandleSwChnlAndSetBW8812: bSwChnl %d, bSetChnlBW %d \n",pHalData->bSwChnl,pHalData->bSetChnlBW);
 
 }
 
@@ -3066,17 +2983,17 @@ SetAntennaConfig8814A(
 VOID
 PHY_SetBWMode8814(
 	IN	PADAPTER			Adapter,
-	IN	CHANNEL_WIDTH	Bandwidth,	// 20M or 40M
+	IN	enum channel_width	Bandwidth,	// 20M or 40M
 	IN	u8					Offset		// Upper, Lower, or Don't care
 )
 {
 	PHAL_DATA_TYPE		pHalData = GET_HAL_DATA(Adapter);
 
-	//DBG_871X("%s()===>\n",__FUNCTION__);
+	//RTW_INFO("%s()===>\n",__FUNCTION__);
 
-	PHY_HandleSwChnlAndSetBW8814A(Adapter, _FALSE, _TRUE, pHalData->CurrentChannel, Bandwidth, Offset, Offset, pHalData->CurrentChannel);
+	PHY_HandleSwChnlAndSetBW8814A(Adapter, _FALSE, _TRUE, pHalData->current_channel, Bandwidth, Offset, Offset, pHalData->current_channel);
 
-	//DBG_871X("<==%s()\n",__FUNCTION__);
+	//RTW_INFO("<==%s()\n",__FUNCTION__);
 }
 
 VOID
@@ -3085,26 +3002,26 @@ PHY_SwChnl8814(
 	IN	u8			channel
 	)
 {
-	//DBG_871X("%s()===>\n",__FUNCTION__);
+	//RTW_INFO("%s()===>\n",__FUNCTION__);
 
 	PHY_HandleSwChnlAndSetBW8814A(Adapter, _TRUE, _FALSE, channel, 0, 0, 0, channel);
 
-	//DBG_871X("<==%s()\n",__FUNCTION__);
+	//RTW_INFO("<==%s()\n",__FUNCTION__);
 }
 
 VOID
 PHY_SetSwChnlBWMode8814(
 	IN	PADAPTER			Adapter,
 	IN	u8					channel,
-	IN	CHANNEL_WIDTH		Bandwidth,
+	IN	enum channel_width		Bandwidth,
 	IN	u8					Offset40,
 	IN	u8					Offset80
 )
 {
-	//DBG_871X("%s()===>\n",__FUNCTION__);
+	//RTW_INFO("%s()===>\n",__FUNCTION__);
 
 	PHY_HandleSwChnlAndSetBW8814A(Adapter, _TRUE, _TRUE, channel, Bandwidth, Offset40, Offset80, channel);
 
-	//DBG_871X("<==%s()\n",__FUNCTION__);
+	//RTW_INFO("<==%s()\n",__FUNCTION__);
 }
 

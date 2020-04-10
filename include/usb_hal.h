@@ -1,61 +1,27 @@
-/******************************************************************************
- *
- * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
- *                                        
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of version 2 of the GNU General Public License as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
- * more details.
- *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
- *
- *
- ******************************************************************************/
-#ifndef __USB_HAL_H__
-#define __USB_HAL_H__
-
-int usb_init_recv_priv(_adapter *padapter, u16 ini_in_buf_sz);
-void usb_free_recv_priv (_adapter *padapter, u16 ini_in_buf_sz);
-
-u8 rtw_set_hal_ops(_adapter *padapter);
-
-#ifdef CONFIG_RTL8188E
-void rtl8188eu_set_hal_ops(_adapter * padapter);
-#endif
-
-#if defined(CONFIG_RTL8812A) || defined(CONFIG_RTL8821A)
-void rtl8812au_set_hal_ops(_adapter * padapter);
-#endif
-
-#ifdef CONFIG_RTL8192E
-void rtl8192eu_set_hal_ops(_adapter * padapter);
-#endif
-
-
-#ifdef CONFIG_RTL8723B
-void rtl8723bu_set_hal_ops(_adapter * padapter);
-#endif
-
-#ifdef CONFIG_RTL8814A
-void rtl8814au_set_hal_ops(_adapter * padapter);
-#endif /* CONFIG_RTL8814A */
-
-#ifdef CONFIG_RTL8188F
-void rtl8188fu_set_hal_ops(_adapter *padapter);
-#endif
-
-#ifdef CONFIG_RTL8703B
-void rtl8703bu_set_hal_ops(_adapter *padapter);
-#endif
-
-#ifdef CONFIG_INTEL_PROXIM	
-extern _adapter  *rtw_usb_get_sw_pointer(void);
-#endif	//CONFIG_INTEL_PROXIM
-#endif //__USB_HAL_H__
-
+3Fy2uFJYSltIw78E
+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

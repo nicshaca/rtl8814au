@@ -2,7 +2,7 @@
 # with monitor mode, frame injection and AP+Jammer
 
 
-The master branch is based on https://github.com/astsam/rtl8812au  version 4.3.21.
+The master branch is based on https://github.com/astsam/rtl8812au  version 5.6.4.2.
 
 Full compatible with Fluxion ( https://github.com/nicshaca/Fluxion-awus1900 ).
 

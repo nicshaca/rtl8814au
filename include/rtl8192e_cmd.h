@@ -1,176 +1,30 @@
-/******************************************************************************
- *
- * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
- *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of version 2 of the GNU General Public License as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
- * more details.
- *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
- *
- *
- ******************************************************************************/
-#ifndef __RTL8192E_CMD_H__
-#define __RTL8192E_CMD_H__
-
-typedef enum _RTL8192E_H2C_CMD 
-{
-	H2C_8192E_RSVDPAGE	= 0x00,
-	H2C_8192E_MSRRPT	= 0x01,
-	H2C_8192E_SCAN		= 0x02,
-	H2C_8192E_KEEP_ALIVE_CTRL = 0x03,
-	H2C_8192E_DISCONNECT_DECISION = 0x04,
-	H2C_8192E_INIT_OFFLOAD = 0x06,
-	H2C_8192E_AP_OFFLOAD = 0x08,
-	H2C_8192E_BCN_RSVDPAGE = 0x09,
-	H2C_8192E_PROBERSP_RSVDPAGE = 0x0a,
-
-	H2C_8192E_AP_WOW_GPIO_CTRL = 0x13,
-	
-	H2C_8192E_SETPWRMODE = 0x20,		
-	H2C_8192E_PS_TUNING_PARA = 0x21,
-	H2C_8192E_PS_TUNING_PARA2 = 0x22,
-	H2C_8192E_PS_LPS_PARA = 0x23,
-	H2C_8192E_P2P_PS_OFFLOAD = 0x24,
-	H2C_8192E_SAP_PS = 0x26,
-	H2C_8192E_RA_MASK = 0x40,
-	H2C_8192E_RSSI_REPORT = 0x42,
-	H2C_8192E_RA_PARA_ADJUST = 0x46,
-
-	H2C_8192E_WO_WLAN = 0x80,
-	H2C_8192E_REMOTE_WAKE_CTRL = 0x81,
-	H2C_8192E_AOAC_GLOBAL_INFO = 0x82,
-	H2C_8192E_AOAC_RSVDPAGE = 0x83,
-
-	//Not defined in new 88E H2C CMD Format
-	H2C_8192E_SELECTIVE_SUSPEND_ROF_CMD,
-	H2C_8192E_P2P_PS_MODE,
-	H2C_8192E_PSD_RESULT,
-	MAX_8192E_H2CCMD
-}RTL8192E_H2C_CMD;
-
-struct cmd_msg_parm {
-	u8 eid; //element id
-	u8 sz; // sz
-	u8 buf[6];
-};
-
-enum{
-	PWRS
-};
-
-typedef struct _SETPWRMODE_PARM {
-	u8 Mode;//0:Active,1:LPS,2:WMMPS
-	//u8 RLBM:4;//0:Min,1:Max,2: User define
-	u8 SmartPS_RLBM;//LPS=0:PS_Poll,1:PS_Poll,2:NullData,WMM=0:PS_Poll,1:NullData
-	u8 AwakeInterval;	// unit: beacon interval
-	u8 bAllQueueUAPSD;
-	u8 PwrState;//AllON(0x0c),RFON(0x04),RFOFF(0x00)
-} SETPWRMODE_PARM, *PSETPWRMODE_PARM;
-
-struct H2C_SS_RFOFF_PARAM{
-	u8 ROFOn; // 1: on, 0:off
-	u16 gpio_period; // unit: 1024 us
-}__attribute__ ((packed));
-
-
-typedef struct JOINBSSRPT_PARM_92E{
-	u8 OpMode;	// RT_MEDIA_STATUS
-#ifdef CONFIG_WOWLAN
-	u8 MacID;       // MACID
-#endif //CONFIG_WOWLAN
-}JOINBSSRPT_PARM_92E, *PJOINBSSRPT_PARM_92E;
-
-/* move to hal_com_h2c.h
-typedef struct _RSVDPAGE_LOC_92E {
-	u8 LocProbeRsp;
-	u8 LocPsPoll;
-	u8 LocNullData;
-	u8 LocQosNull;
-	u8 LocBTQosNull;
-} RSVDPAGE_LOC_92E, *PRSVDPAGE_LOC_92E;
-*/
-
-
-//_SETPWRMODE_PARM
-#define SET_8192E_H2CCMD_PWRMODE_PARM_MODE(__pH2CCmd, __Value)				SET_BITS_TO_LE_1BYTE_8BIT(__pH2CCmd, 0, 8, __Value)
-#define SET_8192E_H2CCMD_PWRMODE_PARM_RLBM(__pH2CCmd, __Value)				SET_BITS_TO_LE_1BYTE((__pH2CCmd)+1, 0, 4, __Value)
-#define SET_8192E_H2CCMD_PWRMODE_PARM_SMART_PS(__pH2CCmd, __Value)			SET_BITS_TO_LE_1BYTE((__pH2CCmd)+1, 4, 4, __Value)
-#define SET_8192E_H2CCMD_PWRMODE_PARM_BCN_PASS_TIME(__pH2CCmd, __Value)		SET_BITS_TO_LE_1BYTE_8BIT((__pH2CCmd)+2, 0, 8, __Value)
-#define SET_8192E_H2CCMD_PWRMODE_PARM_ALL_QUEUE_UAPSD(__pH2CCmd, __Value)	SET_BITS_TO_LE_1BYTE_8BIT((__pH2CCmd)+3, 0, 8, __Value)
-#define SET_8192E_H2CCMD_PWRMODE_PARM_PWR_STATE(__pH2CCmd, __Value)			SET_BITS_TO_LE_1BYTE_8BIT((__pH2CCmd)+4, 0, 8, __Value)
-#define SET_8192E_H2CCMD_PWRMODE_PARM_BYTE5(__pH2CCmd, __Value)				SET_BITS_TO_LE_1BYTE_8BIT((__pH2CCmd)+5, 0, 8, __Value)
-#define GET_8192E_H2CCMD_PWRMODE_PARM_MODE(__pH2CCmd)						LE_BITS_TO_1BYTE(__pH2CCmd, 0, 8)
-
-//_P2P_PS_OFFLOAD
-#define SET_8192E_H2CCMD_P2P_PS_OFFLOAD_ENABLE(__pH2CCmd, __Value)			SET_BITS_TO_LE_1BYTE(__pH2CCmd, 0, 1, __Value)
-#define SET_8192E_H2CCMD_P2P_PS_OFFLOAD_ROLE(__pH2CCmd, __Value)				SET_BITS_TO_LE_1BYTE(__pH2CCmd, 1, 1, __Value)
-#define SET_8192E_H2CCMD_P2P_PS_OFFLOAD_CTWINDOW_EN(__pH2CCmd, __Value)		SET_BITS_TO_LE_1BYTE(__pH2CCmd, 2, 1, __Value)
-#define SET_8192E_H2CCMD_P2P_PS_OFFLOAD_NOA0_EN(__pH2CCmd, __Value)			SET_BITS_TO_LE_1BYTE(__pH2CCmd, 3, 1, __Value)
-#define SET_8192E_H2CCMD_P2P_PS_OFFLOAD_NOA1_EN(__pH2CCmd, __Value)			SET_BITS_TO_LE_1BYTE(__pH2CCmd, 4, 1, __Value)
-#define SET_8192E_H2CCMD_P2P_PS_OFFLOAD_ALLSTASLEEP(__pH2CCmd, __Value)		SET_BITS_TO_LE_1BYTE(__pH2CCmd, 5, 1, __Value)
-
-
-// host message to firmware cmd
-void rtl8192e_set_FwPwrMode_cmd(PADAPTER padapter, u8 Mode);
-void rtl8192e_set_FwJoinBssReport_cmd(PADAPTER padapter, u8 mstatus);
-u8 rtl8192e_set_rssi_cmd(PADAPTER padapter, u8 *param);
-void rtl8192e_set_raid_cmd(PADAPTER padapter, u32 bitmap, u8* arg);
-void rtl8192e_Add_RateATid(PADAPTER padapter, u64 rate_bitmap, u8 *arg, u8 rssi_level);
-s32 FillH2CCmd_8192E(PADAPTER padapter, u8 ElementID, u32 CmdLen, u8 *pCmdBuffer);
-u8 GetTxBufferRsvdPageNum8192E(_adapter *padapter, bool wowlan);
-//u8 rtl8192c_set_FwSelectSuspend_cmd(PADAPTER padapter, u8 bfwpoll, u16 period);
-s32 c2h_handler_8192e(PADAPTER padapter, u8 *buf);
-#ifdef CONFIG_BT_COEXIST
-void rtl8192e_download_BTCoex_AP_mode_rsvd_page(PADAPTER padapter);
-#endif // CONFIG_BT_COEXIST
-#ifdef CONFIG_P2P_PS
-void rtl8192e_set_p2p_ps_offload_cmd(PADAPTER padapter, u8 p2p_ps_state);
-#endif //CONFIG_P2P
-
-void CheckFwRsvdPageContent(PADAPTER padapter);
-void rtl8192e_set_FwMediaStatus_cmd(PADAPTER padapter, u16 mstatus_rpt );
-
-#ifdef CONFIG_TSF_RESET_OFFLOAD
-int reset_tsf(PADAPTER Adapter, u8 reset_port );
-#endif	// CONFIG_TSF_RESET_OFFLOAD
-
-
-#if defined(CONFIG_WOWLAN) || defined(CONFIG_AP_WOWLAN)
-void SetFwRelatedForWoWLAN8192E(_adapter* padapter, u8 bHostIsGoingtoSleep);
-#endif
-/// TX Feedback Content
-#define 	USEC_UNIT_FOR_8192E_C2H_TX_RPT_QUEUE_TIME			256
-
-#define	GET_8192E_C2H_TX_RPT_QUEUE_SELECT(_Header)			LE_BITS_TO_1BYTE((_Header + 0), 0, 5)
-#define	GET_8192E_C2H_TX_RPT_PKT_BROCAST(_Header)			LE_BITS_TO_1BYTE((_Header + 0), 5, 1)
-#define	GET_8192E_C2H_TX_RPT_LIFE_TIME_OVER(_Header)			LE_BITS_TO_1BYTE((_Header + 0), 6, 1)
-#define	GET_8192E_C2H_TX_RPT_RETRY_OVER(_Header)				LE_BITS_TO_1BYTE((_Header + 0), 7, 1)
-#define	GET_8192E_C2H_TX_RPT_MAC_ID(_Header)					LE_BITS_TO_1BYTE((_Header + 1), 0, 8)
-#define	GET_8192E_C2H_TX_RPT_DATA_RETRY_CNT(_Header)		LE_BITS_TO_1BYTE((_Header + 2), 0, 6)
-#define	GET_8192E_C2H_TX_RPT_QUEUE_TIME(_Header)				LE_BITS_TO_2BYTE((_Header + 3), 0, 16)	// In unit of 256 microseconds.
-#define	GET_8192E_C2H_TX_RPT_FINAL_DATA_RATE(_Header)		LE_BITS_TO_1BYTE((_Header + 5), 0, 8)
-
-
-
-void C2HContentParsing8192E(
-	IN	PADAPTER		Adapter,
-	IN	u1Byte			c2hCmdId, 
-	IN	u1Byte			c2hCmdLen,
-	IN	pu1Byte 			tmpBuf
-);
-VOID
-C2HPacketHandler_8192E(
-	IN	PADAPTER		Adapter,
-	IN	pu1Byte			Buffer,
-	IN	u1Byte			Length
-);
-
-#endif//__RTL8192E_CMD_H__
+535009">"ऐप्स  को कैमरे से चित्र और वीडियो लेने देता है. यह अनुमति ऐप्स  को किसी भी समय आपकी पुष्टि के बिना कैमरे का उपयोग करने देती है."</string>
+    <string name="permlab_cameraDisableTransmitLed" msgid="2651072630501126222">"कैमरा उपयोग में होने पर संचारण संकेतक LED अक्षम करें"</string>
+    <string name="permdesc_cameraDisableTransmitLed" msgid="4764585465480295341">"पहले से इंस्टॉल किए गए सिस्टम ऐप्स  को कैमरे को संकेतक LED का उपयोग करने से अक्षम करती है."</string>
+    <string name="permlab_brick" product="tablet" msgid="2961292205764488304">"स्‍थायी रूप से टेबलेट अक्षम करें"</string>
+    <string name="permlab_brick" product="default" msgid="8337817093326370537">"फ़ोन को स्‍थायी रूप से अक्षम करें"</string>
+    <string name="permdesc_brick" product="tablet" msgid="4334818808001699530">"ऐप्स को संपूर्ण टेबलेट को स्‍थायी रूप से अक्षम करने देता है. यह बहुत खतरनाक है."</string>
+    <string name="permdesc_brick" product="default" msgid="5788903297627283099">"ऐप्स को संपूर्ण फ़ोन को स्‍थायी रूप से अक्षम करने देता है. यह बहुत खतरनाक है."</string>
+    <string name="permlab_reboot" product="tablet" msgid="3436634972561795002">"टेबलेट रीबूट के लिए बाध्‍य करें"</string>
+    <string name="permlab_reboot" product="default" msgid="2898560872462638242">"फ़ोन रीबूट के लिए बाध्‍य करें"</string>
+    <string name="permdesc_reboot" product="tablet" msgid="8172056180063700741">"ऐप्स को टेबलेट रीबूट करने के लिए बाध्‍य करने देता है."</string>
+    <string name="permdesc_reboot" product="default" msgid="5326008124289989969">"ऐप्स को फ़ोन बलपूर्वक रीबूट करने देता है."</string>
+    <string name="permlab_mount_unmount_filesystems" product="nosdcard" msgid="2927361537942591841">"USB मेमोरी फ़ाइल सिस्‍टम पर पहुंचें"</string>
+    <string name="permlab_mount_unmount_filesystems" product="default" msgid="4402305049890953810">"SD कार्ड फ़ाइल सिस्‍टम पर पहुंचें"</string>
+    <string name="permdesc_mount_unmount_filesystems" msgid="1829290701658992347">"ऐप्स को निकाले जाने योग्‍य मेमोरी के लिए फ़ाइल सिस्‍टम माउंट और अनमाउंट करने देता है."</string>
+    <string name="permlab_mount_format_filesystems" product="nosdcard" msgid="6227819582624904972">"USB मेमोरी मिटाएं"</string>
+    <string name="permlab_mount_format_filesystems" product="default" msgid="262582698639274056">"SD कार्ड मिटाएं"</string>
+    <string name="permdesc_mount_format_filesystems" msgid="8784268246779198627">"ऐप्स को निकालने योग्‍य मेमोरी फ़ॉर्मेट करने देता है."</string>
+    <string name="permlab_asec_access" msgid="3411338632002193846">"मोबाइल मेमोरी पर जानकारी प्राप्त करें"</string>
+    <string name="permdesc_asec_access" msgid="3094563844593878548">"ऐप्स  को मोबाइल मेमोरी की जानकारी प्राप्‍त करने देता है."</string>
+    <string name="permlab_asec_create" msgid="6414757234789336327">"मोबाइल मेमोरी बनाएं"</string>
+    <string name="permdesc_asec_create" msgid="4558869273585856876">"ऐप्स को मोबाइल मेमोरी बनाने देता है."</string>
+    <string name="permlab_asec_destroy" msgid="526928328301618022">"मोबाइल मेमोरी नष्ट करें"</string>
+    <string name="permdesc_asec_destroy" msgid="7218749286145526537">"ऐप्स को मोबाइल मेमोरी नष्ट करने देता है."</string>
+    <string name="permlab_asec_mount_unmount" msgid="8877998101944999386">"मोबाइल मेमोरी माउंट/अनमाउंट करें"</string>
+    <string name="permdesc_asec_mount_unmount" msgid="3451360114902490929">"ऐप्स को मोबाइल मेमोरी माउंट/अनमाउंट करने देता है."</string>
+    <string name="permlab_asec_rename" msgid="7496633954080472417">"मोबाइल मेमोरी का नाम बदलें"</string>
+    <string name="permdesc_asec_rename" msgid="1794757588472127675">"ऐप्स को मोबाइल मेमोरी का नाम बदलने देता है."</string>
+    <string name="permlab_vibrate" msgid="7696427026057705834">"कंपन नियंत्रित करें"</string>
+    <string name="permdesc_vibrate" msgid="6284989245902300945">"ऐप्स को कंपनकर्ता नियंत्रित करने देता है."</string>
+    <string name="permlab_flashlight" msgid="2155920810121984215">"फ़्लैशलाइट नियंत्रित करें

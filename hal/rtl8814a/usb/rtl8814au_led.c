@@ -21,7 +21,7 @@
 
 //#include <drv_types.h>
 #include <rtl8814a_hal.h>
-
+#ifdef CONFIG_RTW_SW_LED
 //================================================================================
 // LED object.
 //================================================================================
@@ -114,7 +114,7 @@ rtl8814au_InitSwLeds(
 	_adapter	*padapter
 	)
 {
-	struct led_priv *pledpriv = &(padapter->ledpriv);
+	struct led_priv *pledpriv = adapter_to_led(padapter);
 
 	pledpriv->LedControlHandler = LedControlUSB;
 
@@ -138,10 +138,10 @@ rtl8814au_DeInitSwLeds(
 	_adapter	*padapter
 	)
 {
-	struct led_priv	*ledpriv = &(padapter->ledpriv);
+	struct led_priv	*ledpriv = adapter_to_led(padapter);
 
 	DeInitLed( &(ledpriv->SwLed0) );
 	DeInitLed( &(ledpriv->SwLed1) );
 	DeInitLed( &(ledpriv->SwLed2) );
 }
-
+#endif

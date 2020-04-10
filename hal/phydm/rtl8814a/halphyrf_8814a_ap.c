@@ -38,18 +38,18 @@
 //3 Tx Power Tracking
 //3============================================================
 
-u1Byte
+u8
 CheckRFGainOffset(
-	PDM_ODM_T			pDM_Odm,
+	struct dm_struct    *pDM_Odm,
 	PWRTRACK_METHOD 	Method,
-	u1Byte				RFPath
+	u8				RFPath
 	)
 {
 	s1Byte	UpperBound = 10, LowerBound = -5; // 4'b1010 = 10
 	s1Byte	Final_RF_Index = 0;
 	BOOLEAN	bPositive = FALSE;
-	u4Byte	bitMask = 0;
-	u1Byte	Final_OFDM_Swing_Index = 0, TxScalingUpperBound = 28, TxScalingLowerBound = 4;// upper bound +2dB, lower bound -9dB
+	u32	bitMask = 0;
+	u8	Final_OFDM_Swing_Index = 0, TxScalingUpperBound = 28, TxScalingLowerBound = 4;// upper bound +2dB, lower bound -9dB
 	PODM_RF_CAL_T	pRFCalibrateInfo = &(pDM_Odm->RFCalibrateInfo);
 
 	if(Method == MIX_MODE)	//normal Tx power tracking
@@ -109,17 +109,17 @@ CheckRFGainOffset(
 
 VOID
 ODM_TxPwrTrackSetPwr8814A(
-	PDM_ODM_T			pDM_Odm,
+	struct dm_struct    *pDM_Odm,
 	PWRTRACK_METHOD 	Method,
-	u1Byte 				RFPath,
-	u1Byte 				ChannelMappedIndex
+	u8 				RFPath,
+	u8 				ChannelMappedIndex
 	)
 {
 #if !(DM_ODM_SUPPORT_TYPE & ODM_AP)		
 		PADAPTER		Adapter = pDM_Odm->Adapter;
 		PHAL_DATA_TYPE	pHalData = GET_HAL_DATA(Adapter);
 #endif
-		u1Byte			Final_OFDM_Swing_Index = 0; 
+		u8			Final_OFDM_Swing_Index = 0; 
 	PODM_RF_CAL_T	pRFCalibrateInfo = &(pDM_Odm->RFCalibrateInfo);
 
 		if (Method == MIX_MODE)			
@@ -190,16 +190,16 @@ ODM_TxPwrTrackSetPwr8814A(
 
 VOID
 GetDeltaSwingTable_8814A(
-	IN 	PDM_ODM_T			pDM_Odm,
-	OUT pu1Byte 			*TemperatureUP_A,
-	OUT pu1Byte 			*TemperatureDOWN_A,
-	OUT pu1Byte 			*TemperatureUP_B,
-	OUT pu1Byte 			*TemperatureDOWN_B	
+	IN 	struct dm_struct    *pDM_Odm,
+	OUT pu8 			*TemperatureUP_A,
+	OUT pu8 			*TemperatureDOWN_A,
+	OUT pu8 			*TemperatureUP_B,
+	OUT pu8 			*TemperatureDOWN_B	
 	)
 {
     PODM_RF_CAL_T	pRFCalibrateInfo	= &(pDM_Odm->RFCalibrateInfo);
 	u2Byte			rate				= *(pDM_Odm->pForcedDataRate);
-	u1Byte			channel			= *(pDM_Odm->pChannel);
+	u8			channel			= *(pDM_Odm->pChannel);
 
 	if ( 1 <= channel && channel <= 14) {
 		if (IS_CCK_RATE(rate)) {
@@ -229,10 +229,10 @@ GetDeltaSwingTable_8814A(
         *TemperatureUP_B   = pRFCalibrateInfo->DeltaSwingTableIdx_5GB_P[2]; 
         *TemperatureDOWN_B = pRFCalibrateInfo->DeltaSwingTableIdx_5GB_N[2]; 
     } else {
-	    *TemperatureUP_A   = (pu1Byte)DeltaSwingTableIdx_2GA_P_DEFAULT;
-	    *TemperatureDOWN_A = (pu1Byte)DeltaSwingTableIdx_2GA_N_DEFAULT;	
-	    *TemperatureUP_B   = (pu1Byte)DeltaSwingTableIdx_2GA_P_DEFAULT;
-	    *TemperatureDOWN_B = (pu1Byte)DeltaSwingTableIdx_2GA_N_DEFAULT;		
+	    *TemperatureUP_A   = (pu8)DeltaSwingTableIdx_2GA_P_DEFAULT;
+	    *TemperatureDOWN_A = (pu8)DeltaSwingTableIdx_2GA_N_DEFAULT;	
+	    *TemperatureUP_B   = (pu8)DeltaSwingTableIdx_2GA_P_DEFAULT;
+	    *TemperatureDOWN_B = (pu8)DeltaSwingTableIdx_2GA_N_DEFAULT;		
     }
 	
 	return;
@@ -241,16 +241,16 @@ GetDeltaSwingTable_8814A(
 
 VOID
 GetDeltaSwingTable_8814A_PathCD(
-	IN 	PDM_ODM_T			pDM_Odm,
-	OUT pu1Byte 			*TemperatureUP_C,
-	OUT pu1Byte 			*TemperatureDOWN_C,
-	OUT pu1Byte 			*TemperatureUP_D,
-	OUT pu1Byte 			*TemperatureDOWN_D	
+	IN 	struct dm_struct    *pDM_Odm,
+	OUT pu8 			*TemperatureUP_C,
+	OUT pu8 			*TemperatureDOWN_C,
+	OUT pu8 			*TemperatureUP_D,
+	OUT pu8 			*TemperatureDOWN_D	
 	)
 {
 	PODM_RF_CAL_T 	pRFCalibrateInfo	= &(pDM_Odm->RFCalibrateInfo);
 	u2Byte			rate				= *(pDM_Odm->pForcedDataRate);
-	u1Byte			channel			= *(pDM_Odm->pChannel);
+	u8			channel			= *(pDM_Odm->pChannel);
 
 	if ( 1 <= channel && channel <= 14) {
 		if (IS_CCK_RATE(rate)) {
@@ -280,10 +280,10 @@ GetDeltaSwingTable_8814A_PathCD(
         *TemperatureUP_D   = pRFCalibrateInfo->DeltaSwingTableIdx_5GD_P[2]; 
         *TemperatureDOWN_D = pRFCalibrateInfo->DeltaSwingTableIdx_5GD_N[2]; 
     } else {
-	    *TemperatureUP_C   = (pu1Byte)DeltaSwingTableIdx_2GA_P_DEFAULT;
-	    *TemperatureDOWN_C = (pu1Byte)DeltaSwingTableIdx_2GA_N_DEFAULT;	
-	    *TemperatureUP_D   = (pu1Byte)DeltaSwingTableIdx_2GA_P_DEFAULT;
-	    *TemperatureDOWN_D = (pu1Byte)DeltaSwingTableIdx_2GA_N_DEFAULT;		
+	    *TemperatureUP_C   = (pu8)DeltaSwingTableIdx_2GA_P_DEFAULT;
+	    *TemperatureDOWN_C = (pu8)DeltaSwingTableIdx_2GA_N_DEFAULT;	
+	    *TemperatureUP_D   = (pu8)DeltaSwingTableIdx_2GA_P_DEFAULT;
+	    *TemperatureDOWN_D = (pu8)DeltaSwingTableIdx_2GA_N_DEFAULT;		
     }
 	
 	return;
@@ -325,7 +325,7 @@ ODM_CheckPowerStatus(
 {
 	/*
 	   HAL_DATA_TYPE		*pHalData = GET_HAL_DATA(Adapter);
-	   PDM_ODM_T			pDM_Odm = &pHalData->DM_OutSrc;
+	   struct dm_struct    *pDM_Odm = &pHalData->DM_OutSrc;
 	   RT_RF_POWER_STATE 	rtState;
 	   PMGNT_INFO			pMgntInfo	= &(Adapter->MgntInfo);
 
@@ -339,7 +339,7 @@ ODM_CheckPowerStatus(
 	//
 	//	2011/07/19 MH We can not execute tx pwoer tracking/ LLC calibrate or IQK.
 	//
-	Adapter->HalFunc.GetHwRegHandler(Adapter, HW_VAR_RF_STATE, (pu1Byte)(&rtState));	
+	Adapter->HalFunc.GetHwRegHandler(Adapter, HW_VAR_RF_STATE, (pu8)(&rtState));	
 	if(Adapter->bDriverStopped || Adapter->bDriverIsGoingToPnpSetPowerSleep || rtState == eRfOff)
 	{
 	ODM_RT_TRACE(pDM_Odm,COMP_INIT, DBG_LOUD, ("ODM_CheckPowerStatus Return FALSE, due to %d/%d/%d\n", 
@@ -358,12 +358,12 @@ VOID
 #else
 			IN	PADAPTER	pAdapter,
 #endif
-			IN	pu4Byte		ADDAReg,
-			IN	pu4Byte		ADDABackup,
-			IN	u4Byte		RegisterNum
+			IN	pu32		ADDAReg,
+			IN	pu32		ADDABackup,
+			IN	u32		RegisterNum
 			)
 {
-	u4Byte	i;
+	u32	i;
 #if !(DM_ODM_SUPPORT_TYPE & ODM_AP)
 	HAL_DATA_TYPE	*pHalData = GET_HAL_DATA(pAdapter);
 #if (DM_ODM_SUPPORT_TYPE == ODM_CE)
@@ -391,11 +391,11 @@ VOID
 #else
 			IN	PADAPTER	pAdapter,
 #endif
-			IN	pu4Byte		MACReg,
-			IN	pu4Byte		MACBackup
+			IN	pu32		MACReg,
+			IN	pu32		MACBackup
 			)
 {
-	u4Byte	i;
+	u32	i;
 #if !(DM_ODM_SUPPORT_TYPE & ODM_AP)
 	HAL_DATA_TYPE	*pHalData = GET_HAL_DATA(pAdapter);
 #if (DM_ODM_SUPPORT_TYPE == ODM_CE)
@@ -421,12 +421,12 @@ VOID
 #else
 			IN	PADAPTER	pAdapter,
 #endif
-			IN	pu4Byte		ADDAReg,
-			IN	pu4Byte		ADDABackup,
-			IN	u4Byte		RegiesterNum
+			IN	pu32		ADDAReg,
+			IN	pu32		ADDABackup,
+			IN	u32		RegiesterNum
 			)
 {
-	u4Byte	i;
+	u32	i;
 #if !(DM_ODM_SUPPORT_TYPE & ODM_AP)
 	HAL_DATA_TYPE	*pHalData = GET_HAL_DATA(pAdapter);
 #if (DM_ODM_SUPPORT_TYPE == ODM_CE)
@@ -451,11 +451,11 @@ VOID
 #else
 			IN	PADAPTER	pAdapter,
 #endif
-			IN	pu4Byte		MACReg,
-			IN	pu4Byte		MACBackup
+			IN	pu32		MACReg,
+			IN	pu32		MACBackup
 			)
 {
-	u4Byte	i;
+	u32	i;
 #if !(DM_ODM_SUPPORT_TYPE & ODM_AP)
 	HAL_DATA_TYPE	*pHalData = GET_HAL_DATA(pAdapter);
 #if (DM_ODM_SUPPORT_TYPE == ODM_CE)
@@ -467,7 +467,7 @@ VOID
 #endif
 	ODM_RT_TRACE(pDM_Odm,ODM_COMP_CALIBRATION, ODM_DBG_LOUD,  ("Reload MAC parameters !\n"));
 	for(i = 0 ; i < (IQK_MAC_REG_NUM - 1); i++){
-		ODM_Write1Byte(pDM_Odm, MACReg[i], (u1Byte)MACBackup[i]);
+		ODM_Write1Byte(pDM_Odm, MACReg[i], (u8)MACBackup[i]);
 	}
 	ODM_Write4Byte(pDM_Odm, MACReg[i], MACBackup[i]);	
 }
@@ -481,11 +481,11 @@ VOID
 #else
 			IN	PADAPTER	pAdapter,
 #endif
-			IN	pu4Byte		MACReg,
-			IN	pu4Byte		MACBackup	
+			IN	pu32		MACReg,
+			IN	pu32		MACBackup	
 			)
 {
-	u4Byte	i = 0;
+	u32	i = 0;
 #if !(DM_ODM_SUPPORT_TYPE & ODM_AP)
 	HAL_DATA_TYPE	*pHalData = GET_HAL_DATA(pAdapter);
 #if (DM_ODM_SUPPORT_TYPE == ODM_CE)
@@ -500,9 +500,9 @@ VOID
 	ODM_Write1Byte(pDM_Odm, MACReg[i], 0x3F);
 
 	for(i = 1 ; i < (IQK_MAC_REG_NUM - 1); i++){
-		ODM_Write1Byte(pDM_Odm, MACReg[i], (u1Byte)(MACBackup[i]&(~BIT3)));
+		ODM_Write1Byte(pDM_Odm, MACReg[i], (u8)(MACBackup[i]&(~BIT3)));
 	}
-	ODM_Write1Byte(pDM_Odm, MACReg[i], (u1Byte)(MACBackup[i]&(~BIT5)));	
+	ODM_Write1Byte(pDM_Odm, MACReg[i], (u8)(MACBackup[i]&(~BIT5)));	
 
 }
 
@@ -522,11 +522,11 @@ VOID
 			IN	BOOLEAN		is2T
 			)
 {
-	u4Byte	/*RF_Amode=0, RF_Bmode=0,*/ LC_Cal = 0, tmp = 0;
-	u4Byte cnt;
+	u32	/*RF_Amode=0, RF_Bmode=0,*/ LC_Cal = 0, tmp = 0;
+	u32 cnt;
 	
 	//Check continuous TX and Packet TX
-	u4Byte	reg0x914 = ODM_Read4Byte(pDM_Odm, rSingleTone_ContTx_Jaguar);;
+	u32	reg0x914 = ODM_Read4Byte(pDM_Odm, rSingleTone_ContTx_Jaguar);;
 
 	// Backup RF reg18.
 
@@ -582,24 +582,24 @@ VOID
 	PDM_ODM_T		pDM_Odm = &pHalData->DM_OutSrc;
 #endif
 #endif
-	u4Byte 			regD[PATH_NUM];
-	u4Byte			tmpReg, index, offset,  apkbound;
-	u1Byte			path, i, pathbound = PATH_NUM;		
-	u4Byte			BB_backup[APK_BB_REG_NUM];
-	u4Byte			BB_REG[APK_BB_REG_NUM] = {	
+	u32 			regD[PATH_NUM];
+	u32			tmpReg, index, offset,  apkbound;
+	u8			path, i, pathbound = PATH_NUM;		
+	u32			BB_backup[APK_BB_REG_NUM];
+	u32			BB_REG[APK_BB_REG_NUM] = {	
 		rFPGA1_TxBlock, 	rOFDM0_TRxPathEnable, 
 		rFPGA0_RFMOD, 	rOFDM0_TRMuxPar, 
 		rFPGA0_XCD_RFInterfaceSW,	rFPGA0_XAB_RFInterfaceSW, 
 		rFPGA0_XA_RFInterfaceOE, 	rFPGA0_XB_RFInterfaceOE	};
-	u4Byte			BB_AP_MODE[APK_BB_REG_NUM] = {	
+	u32			BB_AP_MODE[APK_BB_REG_NUM] = {	
 		0x00000020, 0x00a05430, 0x02040000, 
 		0x000800e4, 0x00204000 };
-	u4Byte			BB_normal_AP_MODE[APK_BB_REG_NUM] = {	
+	u32			BB_normal_AP_MODE[APK_BB_REG_NUM] = {	
 		0x00000020, 0x00a05430, 0x02040000, 
 		0x000800e4, 0x22204000 };						
 
-	u4Byte			AFE_backup[IQK_ADDA_REG_NUM];
-	u4Byte			AFE_REG[IQK_ADDA_REG_NUM] = {	
+	u32			AFE_backup[IQK_ADDA_REG_NUM];
+	u32			AFE_REG[IQK_ADDA_REG_NUM] = {	
 		rFPGA0_XCD_SwitchControl, 	rBlue_Tooth, 	
 		rRx_Wait_CCA, 		rTx_CCK_RFON,
 		rTx_CCK_BBON, 	rTx_OFDM_RFON, 	
@@ -609,44 +609,44 @@ VOID
 		rRx_TO_Rx, 		rStandby, 	
 		rSleep, 			rPMPD_ANAEN };
 
-	u4Byte			MAC_backup[IQK_MAC_REG_NUM];
-	u4Byte			MAC_REG[IQK_MAC_REG_NUM] = {
+	u32			MAC_backup[IQK_MAC_REG_NUM];
+	u32			MAC_REG[IQK_MAC_REG_NUM] = {
 		REG_TXPAUSE, 		REG_BCN_CTRL,	
 		REG_BCN_CTRL_1,	REG_GPIO_MUXCFG};
 
-	u4Byte			APK_RF_init_value[PATH_NUM][APK_BB_REG_NUM] = {
+	u32			APK_RF_init_value[PATH_NUM][APK_BB_REG_NUM] = {
 		{0x0852c, 0x1852c, 0x5852c, 0x1852c, 0x5852c},
 		{0x2852e, 0x0852e, 0x3852e, 0x0852e, 0x0852e}
 	};	
 
-	u4Byte			APK_normal_RF_init_value[PATH_NUM][APK_BB_REG_NUM] = {
+	u32			APK_normal_RF_init_value[PATH_NUM][APK_BB_REG_NUM] = {
 		{0x0852c, 0x0a52c, 0x3a52c, 0x5a52c, 0x5a52c},	//path settings equal to path b settings
 		{0x0852c, 0x0a52c, 0x5a52c, 0x5a52c, 0x5a52c}
 	};
 
-	u4Byte			APK_RF_value_0[PATH_NUM][APK_BB_REG_NUM] = {
+	u32			APK_RF_value_0[PATH_NUM][APK_BB_REG_NUM] = {
 		{0x52019, 0x52014, 0x52013, 0x5200f, 0x5208d},
 		{0x5201a, 0x52019, 0x52016, 0x52033, 0x52050}
 	};
 
-	u4Byte			APK_normal_RF_value_0[PATH_NUM][APK_BB_REG_NUM] = {
+	u32			APK_normal_RF_value_0[PATH_NUM][APK_BB_REG_NUM] = {
 		{0x52019, 0x52017, 0x52010, 0x5200d, 0x5206a},	//path settings equal to path b settings
 		{0x52019, 0x52017, 0x52010, 0x5200d, 0x5206a}
 	};
 
-	u4Byte			AFE_on_off[PATH_NUM] = {
+	u32			AFE_on_off[PATH_NUM] = {
 		0x04db25a4, 0x0b1b25a4};	//path A on path B off / path A off path B on
 
-	u4Byte			APK_offset[PATH_NUM] = {
+	u32			APK_offset[PATH_NUM] = {
 		rConfig_AntA, rConfig_AntB};
 
-	u4Byte			APK_normal_offset[PATH_NUM] = {
+	u32			APK_normal_offset[PATH_NUM] = {
 		rConfig_Pmpd_AntA, rConfig_Pmpd_AntB};
 
-	u4Byte			APK_value[PATH_NUM] = {
+	u32			APK_value[PATH_NUM] = {
 		0x92fc0000, 0x12fc0000};					
 
-	u4Byte			APK_normal_value[PATH_NUM] = {
+	u32			APK_normal_value[PATH_NUM] = {
 		0x92680000, 0x12680000};					
 
 	s1Byte			APK_delta_mapping[APK_BB_REG_NUM][13] = {
@@ -657,21 +657,21 @@ VOID
 		{-11, -9, -7, -5, -3, -1, 0, 0, 0, 0, 0, 0, 0}
 	};
 
-	u4Byte			APK_normal_setting_value_1[13] = {
+	u32			APK_normal_setting_value_1[13] = {
 		0x01017018, 0xf7ed8f84, 0x1b1a1816, 0x2522201e, 0x322e2b28,
 		0x433f3a36, 0x5b544e49, 0x7b726a62, 0xa69a8f84, 0xdfcfc0b3,
 		0x12680000, 0x00880000, 0x00880000
 	};
 
-	u4Byte			APK_normal_setting_value_2[16] = {
+	u32			APK_normal_setting_value_2[16] = {
 		0x01c7021d, 0x01670183, 0x01000123, 0x00bf00e2, 0x008d00a3,
 		0x0068007b, 0x004d0059, 0x003a0042, 0x002b0031, 0x001f0025,
 		0x0017001b, 0x00110014, 0x000c000f, 0x0009000b, 0x00070008,
 		0x00050006
 	};
 
-	u4Byte			APK_result[PATH_NUM][APK_BB_REG_NUM];	//val_1_1a, val_1_2a, val_2a, val_3a, val_4a
-	//	u4Byte			AP_curve[PATH_NUM][APK_CURVE_REG_NUM];
+	u32			APK_result[PATH_NUM][APK_BB_REG_NUM];	//val_1_1a, val_1_2a, val_2a, val_3a, val_4a
+	//	u32			AP_curve[PATH_NUM][APK_CURVE_REG_NUM];
 
 	s4Byte			BB_offset, delta_V, delta_offset;
 
@@ -1124,7 +1124,7 @@ VOID
 		if(pAdapter->hw_init_completed == _FALSE)
 #endif
 		{
-			u1Byte	u1bTmp;
+			u8	u1bTmp;
 			u1bTmp = ODM_Read1Byte(pDM_Odm, REG_LEDCFG2) | BIT7;
 			ODM_Write1Byte(pDM_Odm, REG_LEDCFG2, u1bTmp);
 			//ODM_SetBBReg(pDM_Odm, REG_LEDCFG0, BIT23, 0x01);
@@ -1215,10 +1215,10 @@ VOID
 #endif
 #endif	
 
-	u4Byte			tmpReg, tmpReg2, index,  i;		
-	u1Byte			path, pathbound = PATH_NUM;
-	u4Byte			AFE_backup[IQK_ADDA_REG_NUM];
-	u4Byte			AFE_REG[IQK_ADDA_REG_NUM] = {	
+	u32			tmpReg, tmpReg2, index,  i;		
+	u8			path, pathbound = PATH_NUM;
+	u32			AFE_backup[IQK_ADDA_REG_NUM];
+	u32			AFE_REG[IQK_ADDA_REG_NUM] = {	
 		rFPGA0_XCD_SwitchControl, 	rBlue_Tooth, 	
 		rRx_Wait_CCA, 		rTx_CCK_RFON,
 		rTx_CCK_BBON, 	rTx_OFDM_RFON, 	
@@ -1228,35 +1228,35 @@ VOID
 		rRx_TO_Rx, 		rStandby, 	
 		rSleep, 			rPMPD_ANAEN };
 
-	u4Byte			BB_backup[DP_BB_REG_NUM];	
-	u4Byte			BB_REG[DP_BB_REG_NUM] = {
+	u32			BB_backup[DP_BB_REG_NUM];	
+	u32			BB_REG[DP_BB_REG_NUM] = {
 		rOFDM0_TRxPathEnable, rFPGA0_RFMOD, 
 		rOFDM0_TRMuxPar, 	rFPGA0_XCD_RFInterfaceSW,
 		rFPGA0_XAB_RFInterfaceSW, rFPGA0_XA_RFInterfaceOE, 
 		rFPGA0_XB_RFInterfaceOE};						
-	u4Byte			BB_settings[DP_BB_REG_NUM] = {
+	u32			BB_settings[DP_BB_REG_NUM] = {
 		0x00a05430, 0x02040000, 0x000800e4, 0x22208000, 
 		0x0, 0x0, 0x0};	
 
-	u4Byte			RF_backup[DP_PATH_NUM][DP_RF_REG_NUM];
-	u4Byte			RF_REG[DP_RF_REG_NUM] = {
+	u32			RF_backup[DP_PATH_NUM][DP_RF_REG_NUM];
+	u32			RF_REG[DP_RF_REG_NUM] = {
 		RF_TXBIAS_A};
 
-	u4Byte			MAC_backup[IQK_MAC_REG_NUM];
-	u4Byte			MAC_REG[IQK_MAC_REG_NUM] = {
+	u32			MAC_backup[IQK_MAC_REG_NUM];
+	u32			MAC_REG[IQK_MAC_REG_NUM] = {
 		REG_TXPAUSE, 		REG_BCN_CTRL,	
 		REG_BCN_CTRL_1,	REG_GPIO_MUXCFG};
 
-	u4Byte			Tx_AGC[DP_DPK_NUM][DP_DPK_VALUE_NUM] = {
+	u32			Tx_AGC[DP_DPK_NUM][DP_DPK_VALUE_NUM] = {
 		{0x1e1e1e1e, 0x03901e1e},
 		{0x18181818, 0x03901818},
 		{0x0e0e0e0e, 0x03900e0e}
 	};
 
-	u4Byte			AFE_on_off[PATH_NUM] = {
+	u32			AFE_on_off[PATH_NUM] = {
 		0x04db25a4, 0x0b1b25a4};	//path A on path B off / path A off path B on
 
-	u1Byte			RetryCount = 0;
+	u8			RetryCount = 0;
 
 
 	ODM_RT_TRACE(pDM_Odm,ODM_COMP_CALIBRATION, ODM_DBG_LOUD, ("==>phy_DigitalPredistortion_8814A()\n"));
@@ -1692,7 +1692,7 @@ VOID
 #endif	
 	if(!pAdapter->bHWInitReady)
 	{
-		u1Byte	u1bTmp;
+		u8	u1bTmp;
 		u1bTmp = ODM_Read1Byte(pDM_Odm, REG_LEDCFG2) | BIT7;
 		ODM_Write1Byte(pDM_Odm, REG_LEDCFG2, u1bTmp);
 		//ODM_SetBBReg(pDM_Odm, REG_LEDCFG0, BIT23, 0x01);

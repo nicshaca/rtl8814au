@@ -1,32 +1,6 @@
-/******************************************************************************
- *
- * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
- *                                        
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of version 2 of the GNU General Public License as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
- * more details.
- *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
- *
- *
- ******************************************************************************/
-#ifndef __USB_OSINTF_H
-#define __USB_OSINTF_H
-
-#include <usb_vendor_req.h>
-
-#define USBD_HALTED(Status) ((ULONG)(Status) >> 30 == 3)
-
-
-u8 usbvendorrequest(struct dvobj_priv *pdvobjpriv, RT_USB_BREQUEST brequest, RT_USB_WVALUE wvalue, u8 windex, void* data, u8 datalen, u8 isdirectionin);
-
-
-#endif
-
+¹¦´4&¡iİ†ÖI iK‘å[‰,I:ğÎO¼ğÆ[‡`†LÇ0Ãàğk€]Iv<ƒ\†í¹h¿ïìîÙ]é¿~ıÀ,¼ãª‚ù(¥qï)XÈ`‹¼x?‹kXâÙu7²(ãf·°Ìâ^ŞÎâ*,V²XÅ‹Y|Äb	6ÜUpOÁ}”´}Ó(+;n]óÌfË’›®Ş”Ÿ;î¶Öğı–f8®ÔJíµ›ÒPªmÓªIW`*4*2Æhè¶-­xL)T$LÊh»CÇL„ø®n{-ÇõµR ÇˆK¦mú—¾ìNÛ7-­ÚŞÜ”®vÕ²C÷	cĞŠ«Û2V­k÷ôš@²äÔ¤À¡²iË[ífUº+zÕ¢±2i­é®Éëh3é7LO@‹9`!¸©’cYÒğwÓz×™§p˜®ÃŠ¿®÷|…áÑtV\²Tdd#ã€­â“¬‡È,|aÈ–oRÚ)ø˜ÖuéW¤çÑ†@1·1½?•ªi‘zI®Ô}
+µ Ü@#²kRr8—ûªÀªP“#@°y§FÕ2b½¹ĞìR7õ§cQ»ÉÏ&V
+=Åûá¶ôÏtÍ6-*$Oßî"2§írÑäœ:úD¶œg¼ŠSøD 0ÔGµËÄö¡ª½Û)YUñ<N(0TÔ U¼Œ	/â%›*êh(0Ul¡¡b–Š&ïØ*´T|Š–b¹€WU¼7U¼…·UÌá’Šwp9Öœ'" p8ˆ¡¥Ûum¹ºdòT\ÓëÇ0Åi¹—™û˜%uOje–}ú#9®ˆÛquğZÎÿÙñºmû)?7”j˜Ö¥¨­ïWyûÙaô¨@MïëÃ ĞT¦Ã}Ó¨vLo‘>^CÖ‚FìsÁg G ezË-iÇZéuÃQ7´µÿíµúúi*ì§±1nô§pÏ!‰1.GúÓã‚F*Æ`¤Ê¤Q!½S8Mò­¾AŠ0À…ücˆüoH¬Š1²ƒ$-F×gò¿ I©(ùbvÎwù™P	œ%y‚8@?I,á®÷è?e7qŞäÃ0‰) ˜å0Mçó,bá[9B»i‡mûF~·JF¤;È
+|‡Ó4W:Pyz„q^†¯&ğèï?Ãù3üz¢OõàL¾ƒC¤Ï'°kş$Ò$ïBÅ=
+à}
+Û2Ê ~TC	’œ¨c…:»r,4¨çÊ*ÎC#£_¡y’ÆYz

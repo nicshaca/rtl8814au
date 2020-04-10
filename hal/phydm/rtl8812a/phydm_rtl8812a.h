@@ -1,7 +1,7 @@
 /******************************************************************************
  *
- * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
- *                                        
+ * Copyright(c) 2007 - 2017 Realtek Corporation.
+ *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of version 2 of the GNU General Public License as
  * published by the Free Software Foundation.
@@ -11,36 +11,17 @@
  * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
  * more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
- *
- *
- ******************************************************************************/
+ *****************************************************************************/
 
-#ifndef	__ODM_RTL8812A_H__
+#ifndef __ODM_RTL8812A_H__
 #define __ODM_RTL8812A_H__
-#if(defined(CONFIG_PATH_DIVERSITY))
 
-VOID
-ODM_PathStatistics_8812A(
-	IN		PDM_ODM_T		pDM_Odm,
-	IN		u4Byte			MacId,
-	IN		u4Byte			RSSI_A,
-	IN		u4Byte			RSSI_B
-);
+s8 phydm_cck_rssi_8812a(struct dm_struct *dm, u16 lna_idx, u8 vga_idx);
 
-VOID
-ODM_PathDiversityInit_8812A(	IN	PDM_ODM_T 	pDM_Odm);
+#ifdef DYN_ANT_WEIGHTING_SUPPORT
+void phydm_dynamic_ant_weighting_8812a(void *dm_void);
+#endif
 
-VOID
-ODM_PathDiversity_8812A(	IN	PDM_ODM_T 	pDM_Odm);
+void phydm_hwsetting_8812a(struct dm_struct *dm);
 
-VOID
-ODM_SetTxPathByTxInfo_8812A(
-	IN		PDM_ODM_T		pDM_Odm,
-	IN		pu1Byte			pDesc,
-	IN		u1Byte			macId	
-);
- #endif
- #endif
+#endif

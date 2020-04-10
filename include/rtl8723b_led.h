@@ -1,49 +1,44 @@
-/******************************************************************************
- *
- * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
- *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of version 2 of the GNU General Public License as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
- * more details.
- *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
- *
- *
- ******************************************************************************/
-#ifndef __RTL8723B_LED_H__
-#define __RTL8723B_LED_H__
+. Finally the
+     * resulting String is passed to {@link Long#parseLong(String, int)}} with
+     * the specified radix.
+     *
+     * @param radix
+     *            the radix used to translate the token into a {@code long}
+     *            value.
+     * @return the next token as a {@code long}.
+     * @throws IllegalStateException
+     *             if this {@code Scanner} has been closed.
+     * @throws NoSuchElementException
+     *             if input has been exhausted.
+     * @throws InputMismatchException
+     *             if the next token can not be translated into a valid
+     *             {@code long} value.
+     */
+    @SuppressWarnings("boxing")
+    public long nextLong(int radix) {
+        checkOpen();
+        Object obj = cachedNextValue;
+        cachedNextValue = null;
+        if (obj instanceof Long) {
+            findStartIndex = cachedNextIndex;
+            return (Long) obj;
+        }
+        Pattern integerPattern = getIntegerPattern(radix);
+        String intString = next(integerPattern);
+        intString = removeLocaleInfo(intString, int.class);
+        long longValue = 0;
+        try {
+            longValue = Long.parseLong(intString, radix);
+        } catch (NumberFormatException e) {
+            matchSuccessful = false;
+            recoverPreviousStatus();
+            throw new InputMismatchException();
+        }
+        return longValue;
+    }
 
-#include <drv_conf.h>
-#include <osdep_service.h>
-#include <drv_types.h>
-
-
-//================================================================================
-// Interface to manipulate LED objects.
-//================================================================================
-#ifdef CONFIG_USB_HCI
-void rtl8723bu_InitSwLeds(PADAPTER padapter);
-void rtl8723bu_DeInitSwLeds(PADAPTER padapter);
-#endif
-#ifdef CONFIG_SDIO_HCI
-void rtl8723bs_InitSwLeds(PADAPTER padapter);
-void rtl8723bs_DeInitSwLeds(PADAPTER padapter);
-#endif
-#ifdef CONFIG_GSPI_HCI
-void rtl8723bs_InitSwLeds(PADAPTER padapter);
-void rtl8723bs_DeInitSwLeds(PADAPTER padapter);
-#endif
-#ifdef CONFIG_PCI_HCI
-void rtl8723be_InitSwLeds(PADAPTER padapter);
-void rtl8723be_DeInitSwLeds(PADAPTER padapter);
-#endif
-
-#endif
-
+    /**
+     * Returns the next token as a {@code short} in the current radix.
+     * This method may block for more input.
+     *
+     * @throws IllegalStateEx

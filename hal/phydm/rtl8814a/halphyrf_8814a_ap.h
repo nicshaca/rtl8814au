@@ -37,20 +37,20 @@ void ConfigureTxpowerTrack_8814A(
 
 VOID
 GetDeltaSwingTable_8814A(
-	IN 	PDM_ODM_T			pDM_Odm,
-	OUT pu1Byte 			*TemperatureUP_A,
-	OUT pu1Byte 			*TemperatureDOWN_A,
-	OUT pu1Byte 			*TemperatureUP_B,
-	OUT pu1Byte 			*TemperatureDOWN_B	
+	struct dm_struct    *pDM_Odm,
+	u8* 			*TemperatureUP_A,
+	u8* 			*TemperatureDOWN_A,
+	u8* 			*TemperatureUP_B,
+	u8* 			*TemperatureDOWN_B	
 	);
 
 VOID
 GetDeltaSwingTable_8814A_PathCD(
-	IN 	PDM_ODM_T			pDM_Odm,
-	OUT pu1Byte 			*TemperatureUP_C,
-	OUT pu1Byte 			*TemperatureDOWN_C,
-	OUT pu1Byte 			*TemperatureUP_D,
-	OUT pu1Byte 			*TemperatureDOWN_D	
+	struct dm_struct    *pDM_Odm,
+	u8* 			*TemperatureUP_C,
+	u8* 			*TemperatureDOWN_C,
+	u8* 			*TemperatureUP_D,
+	u8* 			*TemperatureDOWN_D	
 	);
 
 VOID

@@ -1,22 +1,17 @@
-/****************************************************************************** 
-* 
-* Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved. 
-* 
-* This program is free software; you can redistribute it and/or modify it 
-* under the terms of version 2 of the GNU General Public License as 
-* published by the Free Software Foundation. 
-* 
-* This program is distributed in the hope that it will be useful, but WITHOUT 
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for 
-* more details. 
-* 
-* You should have received a copy of the GNU General Public License along with 
-* this program; if not, write to the Free Software Foundation, Inc., 
-* 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA 
-* 
-* 
-******************************************************************************/
+/******************************************************************************
+ *
+ * Copyright(c) 2007 - 2017 Realtek Corporation.
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of version 2 of the GNU General Public License as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
+ *
+ *****************************************************************************/
 
 /*Image2HeaderVersion: 2.19*/
 #include "mp_precomp.h"
@@ -25,48 +20,48 @@
 #if (RTL8814A_SUPPORT == 1)
 static BOOLEAN
 CheckPositive(
-	IN  PDM_ODM_T     pDM_Odm,
-	IN  const u4Byte  Condition1,
-	IN  const u4Byte  Condition2,
-	IN	const u4Byte  Condition3,
-	IN	const u4Byte  Condition4
+	struct dm_struct    *pDM_Odm,
+	const u32  Condition1,
+	const u32  Condition2,
+	const u32  Condition3,
+	const u32  Condition4
 )
 {
-	u1Byte    _BoardType = ((pDM_Odm->BoardType & BIT4) >> 4) << 0 | /* _GLNA*/
-				((pDM_Odm->BoardType & BIT3) >> 3) << 1 | /* _GPA*/ 
-				((pDM_Odm->BoardType & BIT7) >> 7) << 2 | /* _ALNA*/
-				((pDM_Odm->BoardType & BIT6) >> 6) << 3 | /* _APA */
-				((pDM_Odm->BoardType & BIT2) >> 2) << 4;  /* _BT*/  
+	u1Byte    _BoardType = ((pDM_Odm->board_type & BIT4) >> 4) << 0 | /* _GLNA*/
+				((pDM_Odm->board_type & BIT3) >> 3) << 1 | /* _GPA*/ 
+				((pDM_Odm->board_type & BIT7) >> 7) << 2 | /* _ALNA*/
+				((pDM_Odm->board_type & BIT6) >> 6) << 3 | /* _APA */
+				((pDM_Odm->board_type & BIT2) >> 2) << 4;  /* _BT*/  
 
-	u4Byte	cond1   = Condition1, cond2 = Condition2, cond3 = Condition3, cond4 = Condition4;
-	u4Byte    driver1 = pDM_Odm->CutVersion       << 24 | 
-				(pDM_Odm->SupportInterface & 0xF0) << 16 | 
-				pDM_Odm->SupportPlatform  << 16 | 
-				pDM_Odm->PackageType      << 12 | 
-				(pDM_Odm->SupportInterface & 0x0F) << 8  |
+	u32	cond1   = Condition1, cond2 = Condition2, cond3 = Condition3, cond4 = Condition4;
+	u32    driver1 = pDM_Odm->cut_version       << 24 | 
+				(pDM_Odm->support_interface & 0xF0) << 16 | 
+				pDM_Odm->support_platform  << 16 | 
+				pDM_Odm->package_type      << 12 | 
+				(pDM_Odm->support_interface & 0x0F) << 8  |
 				_BoardType;
 
-	u4Byte    driver2 = (pDM_Odm->TypeGLNA & 0xFF) <<  0 |  
-				(pDM_Odm->TypeGPA & 0xFF)  <<  8 | 
-				(pDM_Odm->TypeALNA & 0xFF) << 16 | 
-				(pDM_Odm->TypeAPA & 0xFF)  << 24; 
+	u32    driver2 = (pDM_Odm->type_glna & 0xFF) <<  0 |  
+				(pDM_Odm->type_gpa & 0xFF)  <<  8 | 
+				(pDM_Odm->type_alna & 0xFF) << 16 | 
+				(pDM_Odm->type_apa & 0xFF)  << 24; 
 
-u4Byte    driver3 = 0;
+u32    driver3 = 0;
 
-	u4Byte    driver4 = (pDM_Odm->TypeGLNA & 0xFF00) >>  8 |
-				(pDM_Odm->TypeGPA & 0xFF00) |
-				(pDM_Odm->TypeALNA & 0xFF00) << 8 |
-				(pDM_Odm->TypeAPA & 0xFF00)  << 16;
+	u32    driver4 = (pDM_Odm->type_glna & 0xFF00) >>  8 |
+				(pDM_Odm->type_gpa & 0xFF00) |
+				(pDM_Odm->type_alna & 0xFF00) << 8 |
+				(pDM_Odm->type_apa & 0xFF00)  << 16;
 
-	ODM_RT_TRACE(pDM_Odm, ODM_COMP_INIT, ODM_DBG_TRACE, 
-	("===> CheckPositive (cond1, cond2, cond3, cond4) = (0x%X 0x%X 0x%X 0x%X)\n", cond1, cond2, cond3, cond4));
-	ODM_RT_TRACE(pDM_Odm, ODM_COMP_INIT, ODM_DBG_TRACE, 
-	("===> CheckPositive (driver1, driver2, driver3, driver4) = (0x%X 0x%X 0x%X 0x%X)\n", driver1, driver2, driver3, driver4));
+	PHYDM_DBG(pDM_Odm, ODM_COMP_INIT,  
+	"===> CheckPositive (cond1, cond2, cond3, cond4) = (0x%X 0x%X 0x%X 0x%X)\n", cond1, cond2, cond3, cond4);
+	PHYDM_DBG(pDM_Odm, ODM_COMP_INIT,  
+	"===> CheckPositive (driver1, driver2, driver3, driver4) = (0x%X 0x%X 0x%X 0x%X)\n", driver1, driver2, driver3, driver4);
 
-	ODM_RT_TRACE(pDM_Odm, ODM_COMP_INIT, ODM_DBG_TRACE, 
-	("	(Platform, Interface) = (0x%X, 0x%X)\n", pDM_Odm->SupportPlatform, pDM_Odm->SupportInterface));
-	ODM_RT_TRACE(pDM_Odm, ODM_COMP_INIT, ODM_DBG_TRACE, 
-	("	(Board, Package) = (0x%X, 0x%X)\n", pDM_Odm->BoardType, pDM_Odm->PackageType));
+	PHYDM_DBG(pDM_Odm, ODM_COMP_INIT,  
+	"	(Platform, Interface) = (0x%X, 0x%X)\n", pDM_Odm->support_platform, pDM_Odm->support_interface);
+	PHYDM_DBG(pDM_Odm, ODM_COMP_INIT,  
+	"	(Board, Package) = (0x%X, 0x%X)\n", pDM_Odm->board_type, pDM_Odm->package_type);
 
 
 	/*============== Value Defined Check ===============*/
@@ -84,7 +79,7 @@ u4Byte    driver3 = 0;
 	driver1 &= 0x00FF0FFF; 
 
 	if ((cond1 & driver1) == cond1) {
-		u4Byte bitMask = 0;
+		u32 bitMask = 0;
 
 		if ((cond1 & 0x0F) == 0) /* BoardType is DONTCARE*/
 			return TRUE;
@@ -107,9 +102,9 @@ u4Byte    driver3 = 0;
 }
 static BOOLEAN
 CheckNegative(
-	IN  PDM_ODM_T     pDM_Odm,
-	IN  const u4Byte  Condition1,
-	IN  const u4Byte  Condition2
+	struct dm_struct    *pDM_Odm,
+	const u32  Condition1,
+	const u32  Condition2
 )
 {
 	return TRUE;
@@ -119,7 +114,7 @@ CheckNegative(
 *                           AGC_TAB.TXT
 ******************************************************************************/
 
-u4Byte Array_MP_8814A_AGC_TAB[] = { 
+u32 Array_MP_8814A_AGC_TAB[] = {
 	0x80000001,	0x00000055,	0x40000000,	0x00000000,
 		0x81C, 0xFE000003,
 		0x81C, 0xFF000003,
@@ -1504,19 +1499,19 @@ u4Byte Array_MP_8814A_AGC_TAB[] = {
 };
 
 void
-ODM_ReadAndConfig_MP_8814A_AGC_TAB(
-	IN   PDM_ODM_T  pDM_Odm
+odm_read_and_config_mp_8814a_agc_tab(
+	struct dm_struct*   pDM_Odm
 )
 {
-	u4Byte     i         = 0;
+	u32     i         = 0;
 	u1Byte     cCond;
 	BOOLEAN bMatched = TRUE, bSkipped = FALSE;
-	u4Byte     ArrayLen    = sizeof(Array_MP_8814A_AGC_TAB)/sizeof(u4Byte);
-	pu4Byte    Array       = Array_MP_8814A_AGC_TAB;
+	u32     ArrayLen    = sizeof(Array_MP_8814A_AGC_TAB)/sizeof(u32);
+	u32*    Array       = Array_MP_8814A_AGC_TAB;
 	
-	u4Byte	v1 = 0, v2 = 0, pre_v1 = 0, pre_v2 = 0;
+	u32	v1 = 0, v2 = 0, pre_v1 = 0, pre_v2 = 0;
 
-	ODM_RT_TRACE(pDM_Odm, ODM_COMP_INIT, ODM_DBG_LOUD, ("===> ODM_ReadAndConfig_MP_8814A_AGC_TAB\n"));
+	PHYDM_DBG(pDM_Odm, ODM_COMP_INIT, "===> ODM_ReadAndConfig_MP_8814A_AGC_TAB\n");
 
 	while ((i + 1) < ArrayLen) {
 		v1 = Array[i];
@@ -1528,14 +1523,14 @@ ODM_ReadAndConfig_MP_8814A_AGC_TAB(
 				if (cCond == COND_ENDIF) {/*end*/
 					bMatched = TRUE;
 					bSkipped = FALSE;
-					ODM_RT_TRACE(pDM_Odm, ODM_COMP_INIT, ODM_DBG_LOUD, ("ENDIF\n"));
+					PHYDM_DBG(pDM_Odm, ODM_COMP_INIT, "ENDIF\n");
 				} else if (cCond == COND_ELSE) { /*else*/
 					bMatched = bSkipped?FALSE:TRUE;
-					ODM_RT_TRACE(pDM_Odm, ODM_COMP_INIT, ODM_DBG_LOUD, ("ELSE\n"));
+					PHYDM_DBG(pDM_Odm, ODM_COMP_INIT, "ELSE\n");
 				} else {/*if , else if*/
 					pre_v1 = v1;
 					pre_v2 = v2;
-					ODM_RT_TRACE(pDM_Odm, ODM_COMP_INIT, ODM_DBG_LOUD, ("IF or ELSE IF\n"));
+					PHYDM_DBG(pDM_Odm, ODM_COMP_INIT, "IF or ELSE IF\n");
 				}
 			} else if (v1 & BIT30) { /*negative condition*/
 				if (bSkipped == FALSE) {
@@ -1557,7 +1552,7 @@ ODM_ReadAndConfig_MP_8814A_AGC_TAB(
 	}
 }
 
-u4Byte
+u32
 ODM_GetVersion_MP_8814A_AGC_TAB(void)
 {
 	   return 85;
@@ -1567,7 +1562,7 @@ ODM_GetVersion_MP_8814A_AGC_TAB(void)
 *                           PHY_REG.TXT
 ******************************************************************************/
 
-u4Byte Array_MP_8814A_PHY_REG[] = { 
+u32 Array_MP_8814A_PHY_REG[] = {
 		0x800, 0x9020D010,
 		0x804, 0x08011280,
 		0x808, 0x0E0282FF,
@@ -3641,19 +3636,19 @@ u4Byte Array_MP_8814A_PHY_REG[] = {
 };
 
 void
-ODM_ReadAndConfig_MP_8814A_PHY_REG(
-	IN   PDM_ODM_T  pDM_Odm
+odm_read_and_config_mp_8814a_phy_reg(
+	struct dm_struct*   pDM_Odm
 )
 {
-	u4Byte     i         = 0;
+	u32     i         = 0;
 	u1Byte     cCond;
 	BOOLEAN bMatched = TRUE, bSkipped = FALSE;
-	u4Byte     ArrayLen    = sizeof(Array_MP_8814A_PHY_REG)/sizeof(u4Byte);
-	pu4Byte    Array       = Array_MP_8814A_PHY_REG;
+	u32     ArrayLen    = sizeof(Array_MP_8814A_PHY_REG)/sizeof(u32);
+	u32*    Array       = Array_MP_8814A_PHY_REG;
 	
-	u4Byte	v1 = 0, v2 = 0, pre_v1 = 0, pre_v2 = 0;
+	u32	v1 = 0, v2 = 0, pre_v1 = 0, pre_v2 = 0;
 
-	ODM_RT_TRACE(pDM_Odm, ODM_COMP_INIT, ODM_DBG_LOUD, ("===> ODM_ReadAndConfig_MP_8814A_PHY_REG\n"));
+	PHYDM_DBG(pDM_Odm, ODM_COMP_INIT, "===> ODM_ReadAndConfig_MP_8814A_PHY_REG\n");
 
 	while ((i + 1) < ArrayLen) {
 		v1 = Array[i];
@@ -3665,14 +3660,14 @@ ODM_ReadAndConfig_MP_8814A_PHY_REG(
 				if (cCond == COND_ENDIF) {/*end*/
 					bMatched = TRUE;
 					bSkipped = FALSE;
-					ODM_RT_TRACE(pDM_Odm, ODM_COMP_INIT, ODM_DBG_LOUD, ("ENDIF\n"));
+					PHYDM_DBG(pDM_Odm, ODM_COMP_INIT, "ENDIF\n");
 				} else if (cCond == COND_ELSE) { /*else*/
 					bMatched = bSkipped?FALSE:TRUE;
-					ODM_RT_TRACE(pDM_Odm, ODM_COMP_INIT, ODM_DBG_LOUD, ("ELSE\n"));
+					PHYDM_DBG(pDM_Odm, ODM_COMP_INIT, "ELSE\n");
 				} else {/*if , else if*/
 					pre_v1 = v1;
 					pre_v2 = v2;
-					ODM_RT_TRACE(pDM_Odm, ODM_COMP_INIT, ODM_DBG_LOUD, ("IF or ELSE IF\n"));
+					PHYDM_DBG(pDM_Odm, ODM_COMP_INIT, "IF or ELSE IF\n");
 				}
 			} else if (v1 & BIT30) { /*negative condition*/
 				if (bSkipped == FALSE) {
@@ -3694,7 +3689,7 @@ ODM_ReadAndConfig_MP_8814A_PHY_REG(
 	}
 }
 
-u4Byte
+u32
 ODM_GetVersion_MP_8814A_PHY_REG(void)
 {
 	   return 85;
@@ -3704,26 +3699,26 @@ ODM_GetVersion_MP_8814A_PHY_REG(void)
 *                           PHY_REG_MP.TXT
 ******************************************************************************/
 
-u4Byte Array_MP_8814A_PHY_REG_MP[] = { 
+u32 Array_MP_8814A_PHY_REG_MP[] = {
 		0x8FC, 0x00000000,
 		0x838, 0x86667641,
 
 };
 
 void
-ODM_ReadAndConfig_MP_8814A_PHY_REG_MP(
-	IN   PDM_ODM_T  pDM_Odm
+odm_read_and_config_mp_8814a_phy_reg_mp(
+	struct dm_struct*   pDM_Odm
 )
 {
-	u4Byte     i         = 0;
+	u32     i         = 0;
 	u1Byte     cCond;
 	BOOLEAN bMatched = TRUE, bSkipped = FALSE;
-	u4Byte     ArrayLen    = sizeof(Array_MP_8814A_PHY_REG_MP)/sizeof(u4Byte);
-	pu4Byte    Array       = Array_MP_8814A_PHY_REG_MP;
+	u32     ArrayLen    = sizeof(Array_MP_8814A_PHY_REG_MP)/sizeof(u32);
+	u32*    Array       = Array_MP_8814A_PHY_REG_MP;
 	
-	u4Byte	v1 = 0, v2 = 0, pre_v1 = 0, pre_v2 = 0;
+	u32	v1 = 0, v2 = 0, pre_v1 = 0, pre_v2 = 0;
 
-	ODM_RT_TRACE(pDM_Odm, ODM_COMP_INIT, ODM_DBG_LOUD, ("===> ODM_ReadAndConfig_MP_8814A_PHY_REG_MP\n"));
+	PHYDM_DBG(pDM_Odm, ODM_COMP_INIT, "===> ODM_ReadAndConfig_MP_8814A_PHY_REG_MP\n");
 
 	while ((i + 1) < ArrayLen) {
 		v1 = Array[i];
@@ -3735,14 +3730,14 @@ ODM_ReadAndConfig_MP_8814A_PHY_REG_MP(
 				if (cCond == COND_ENDIF) {/*end*/
 					bMatched = TRUE;
 					bSkipped = FALSE;
-					ODM_RT_TRACE(pDM_Odm, ODM_COMP_INIT, ODM_DBG_LOUD, ("ENDIF\n"));
+					PHYDM_DBG(pDM_Odm, ODM_COMP_INIT, "ENDIF\n");
 				} else if (cCond == COND_ELSE) { /*else*/
 					bMatched = bSkipped?FALSE:TRUE;
-					ODM_RT_TRACE(pDM_Odm, ODM_COMP_INIT, ODM_DBG_LOUD, ("ELSE\n"));
+					PHYDM_DBG(pDM_Odm, ODM_COMP_INIT, "ELSE\n");
 				} else {/*if , else if*/
 					pre_v1 = v1;
 					pre_v2 = v2;
-					ODM_RT_TRACE(pDM_Odm, ODM_COMP_INIT, ODM_DBG_LOUD, ("IF or ELSE IF\n"));
+					PHYDM_DBG(pDM_Odm, ODM_COMP_INIT, "IF or ELSE IF\n");
 				}
 			} else if (v1 & BIT30) { /*negative condition*/
 				if (bSkipped == FALSE) {
@@ -3764,7 +3759,7 @@ ODM_ReadAndConfig_MP_8814A_PHY_REG_MP(
 	}
 }
 
-u4Byte
+u32
 ODM_GetVersion_MP_8814A_PHY_REG_MP(void)
 {
 	   return 85;
@@ -3774,7 +3769,7 @@ ODM_GetVersion_MP_8814A_PHY_REG_MP(void)
 *                           PHY_REG_PG.TXT
 ******************************************************************************/
 
-u4Byte Array_MP_8814A_PHY_REG_PG[] = { 
+u32 Array_MP_8814A_PHY_REG_PG[] = {
 	0, 0, 0, 0x00000c20, 0xffffffff, 0x34363840,
 	0, 0, 0, 0x00000c24, 0xffffffff, 0x42424444,
 	0, 0, 0, 0x00000c28, 0xffffffff, 0x30323638,
@@ -3910,13 +3905,13 @@ u4Byte Array_MP_8814A_PHY_REG_PG[] = {
 };
 
 void
-ODM_ReadAndConfig_MP_8814A_PHY_REG_PG(
-	IN   PDM_ODM_T  pDM_Odm
+odm_read_and_config_mp_8814a_phy_reg_pg(
+	struct dm_struct*   pDM_Odm
 )
 {
-	u4Byte     i         = 0;
-	u4Byte     ArrayLen    = sizeof(Array_MP_8814A_PHY_REG_PG)/sizeof(u4Byte);
-	pu4Byte    Array       = Array_MP_8814A_PHY_REG_PG;
+	u32     i         = 0;
+	u32     ArrayLen    = sizeof(Array_MP_8814A_PHY_REG_PG)/sizeof(u32);
+	u32*    Array       = Array_MP_8814A_PHY_REG_PG;
 
 #if (DM_ODM_SUPPORT_TYPE == ODM_WIN)
 	PADAPTER		Adapter = pDM_Odm->Adapter;
@@ -3926,18 +3921,18 @@ ODM_ReadAndConfig_MP_8814A_PHY_REG_PG(
 	pHalData->nLinesReadPwrByRate = ArrayLen/6;
 #endif
 
-	ODM_RT_TRACE(pDM_Odm, ODM_COMP_INIT, ODM_DBG_LOUD, ("===> ODM_ReadAndConfig_MP_8814A_PHY_REG_PG\n"));
+	PHYDM_DBG(pDM_Odm, ODM_COMP_INIT, "===> ODM_ReadAndConfig_MP_8814A_PHY_REG_PG\n");
 
-	pDM_Odm->PhyRegPgVersion = 1;
-	pDM_Odm->PhyRegPgValueType = PHY_REG_PG_EXACT_VALUE;
+	pDM_Odm->phy_reg_pg_version = 1;
+	pDM_Odm->phy_reg_pg_value_type = PHY_REG_PG_EXACT_VALUE;
 
 	for (i = 0; i < ArrayLen; i += 6) {
-		u4Byte v1 = Array[i];
-		u4Byte v2 = Array[i+1];
-		u4Byte v3 = Array[i+2];
-		u4Byte v4 = Array[i+3];
-		u4Byte v5 = Array[i+4];
-		u4Byte v6 = Array[i+5];
+		u32 v1 = Array[i];
+		u32 v2 = Array[i+1];
+		u32 v3 = Array[i+2];
+		u32 v4 = Array[i+3];
+		u32 v5 = Array[i+4];
+		u32 v6 = Array[i+5];
 
 	    odm_ConfigBB_PHY_REG_PG_8814A(pDM_Odm, v1, v2, v3, v4, v5, v6);
 
@@ -3952,9 +3947,9 @@ ODM_ReadAndConfig_MP_8814A_PHY_REG_PG(
 
 /******************************************************************************
 *                           PHY_REG_PG_Type2.TXT
-******************************************************************************/
+******************************************************************************\
 
-u4Byte Array_MP_8814A_PHY_REG_PG_Type2[] = { 
+u32 Array_MP_8814A_PHY_REG_PG_Type2[] = {
 	0, 0, 0, 0x00000c20, 0xffffffff, 0x36363636,
 	0, 0, 0, 0x00000c24, 0xffffffff, 0x36363636,
 	0, 0, 0, 0x00000c28, 0xffffffff, 0x30323436,
@@ -4090,13 +4085,13 @@ u4Byte Array_MP_8814A_PHY_REG_PG_Type2[] = {
 };
 
 void
-ODM_ReadAndConfig_MP_8814A_PHY_REG_PG_Type2(
-	IN   PDM_ODM_T  pDM_Odm
+_odm_read_and_config_mp_8814a_phy_reg_pg_type2(
+	struct dm_struct*   pDM_Odm
 )
 {
-	u4Byte     i         = 0;
-	u4Byte     ArrayLen    = sizeof(Array_MP_8814A_PHY_REG_PG_Type2)/sizeof(u4Byte);
-	pu4Byte    Array       = Array_MP_8814A_PHY_REG_PG_Type2;
+	u32     i         = 0;
+	u32     ArrayLen    = sizeof(Array_MP_8814A_PHY_REG_PG_Type2)/sizeof(u32);
+	u32*    Array       = Array_MP_8814A_PHY_REG_PG_Type2;
 
 #if (DM_ODM_SUPPORT_TYPE == ODM_WIN)
 	PADAPTER		Adapter = pDM_Odm->Adapter;
@@ -4106,18 +4101,18 @@ ODM_ReadAndConfig_MP_8814A_PHY_REG_PG_Type2(
 	pHalData->nLinesReadPwrByRate = ArrayLen/6;
 #endif
 
-	ODM_RT_TRACE(pDM_Odm, ODM_COMP_INIT, ODM_DBG_LOUD, ("===> ODM_ReadAndConfig_MP_8814A_PHY_REG_PG_Type2\n"));
+	PHYDM_DBG(pDM_Odm, ODM_COMP_INIT, "===> ODM_ReadAndConfig_MP_8814A_PHY_REG_PG_Type2\n");
 
-	pDM_Odm->PhyRegPgVersion = 1;
-	pDM_Odm->PhyRegPgValueType = PHY_REG_PG_EXACT_VALUE;
+	pDM_Odm->phy_reg_pg_version = 1;
+	pDM_Odm->phy_reg_pg_value_type = PHY_REG_PG_EXACT_VALUE;
 
 	for (i = 0; i < ArrayLen; i += 6) {
-		u4Byte v1 = Array[i];
-		u4Byte v2 = Array[i+1];
-		u4Byte v3 = Array[i+2];
-		u4Byte v4 = Array[i+3];
-		u4Byte v5 = Array[i+4];
-		u4Byte v6 = Array[i+5];
+		u32 v1 = Array[i];
+		u32 v2 = Array[i+1];
+		u32 v3 = Array[i+2];
+		u32 v4 = Array[i+3];
+		u32 v5 = Array[i+4];
+		u32 v6 = Array[i+5];
 
 	    odm_ConfigBB_PHY_REG_PG_8814A(pDM_Odm, v1, v2, v3, v4, v5, v6);
 
@@ -4129,12 +4124,11 @@ ODM_ReadAndConfig_MP_8814A_PHY_REG_PG_Type2(
 }
 
 
-
-/******************************************************************************
+******************************************************************************
 *                           PHY_REG_PG_Type3.TXT
-******************************************************************************/
+******************************************************************************
 
-u4Byte Array_MP_8814A_PHY_REG_PG_Type3[] = { 
+u32 Array_MP_8814A_PHY_REG_PG_Type3[] = {
 	0, 0, 0, 0x00000c20, 0xffffffff, 0x48484848,
 	0, 0, 0, 0x00000c24, 0xffffffff, 0x46464646,
 	0, 0, 0, 0x00000c28, 0xffffffff, 0x44464646,
@@ -4270,13 +4264,13 @@ u4Byte Array_MP_8814A_PHY_REG_PG_Type3[] = {
 };
 
 void
-ODM_ReadAndConfig_MP_8814A_PHY_REG_PG_Type3(
-	IN   PDM_ODM_T  pDM_Odm
+_odm_read_and_config_mp_8814a_phy_reg_pg_type3(
+	struct dm_struct*   pDM_Odm
 )
 {
-	u4Byte     i         = 0;
-	u4Byte     ArrayLen    = sizeof(Array_MP_8814A_PHY_REG_PG_Type3)/sizeof(u4Byte);
-	pu4Byte    Array       = Array_MP_8814A_PHY_REG_PG_Type3;
+	u32     i         = 0;
+	u32     ArrayLen    = sizeof(Array_MP_8814A_PHY_REG_PG_Type3)/sizeof(u32);
+	u32*    Array       = Array_MP_8814A_PHY_REG_PG_Type3;
 
 #if (DM_ODM_SUPPORT_TYPE == ODM_WIN)
 	PADAPTER		Adapter = pDM_Odm->Adapter;
@@ -4286,18 +4280,18 @@ ODM_ReadAndConfig_MP_8814A_PHY_REG_PG_Type3(
 	pHalData->nLinesReadPwrByRate = ArrayLen/6;
 #endif
 
-	ODM_RT_TRACE(pDM_Odm, ODM_COMP_INIT, ODM_DBG_LOUD, ("===> ODM_ReadAndConfig_MP_8814A_PHY_REG_PG_Type3\n"));
+	PHYDM_DBG(pDM_Odm, ODM_COMP_INIT, "===> ODM_ReadAndConfig_MP_8814A_PHY_REG_PG_Type3\n");
 
-	pDM_Odm->PhyRegPgVersion = 1;
-	pDM_Odm->PhyRegPgValueType = PHY_REG_PG_EXACT_VALUE;
+	pDM_Odm->phy_reg_pg_version = 1;
+	pDM_Odm->phy_reg_pg_value_type = PHY_REG_PG_EXACT_VALUE;
 
 	for (i = 0; i < ArrayLen; i += 6) {
-		u4Byte v1 = Array[i];
-		u4Byte v2 = Array[i+1];
-		u4Byte v3 = Array[i+2];
-		u4Byte v4 = Array[i+3];
-		u4Byte v5 = Array[i+4];
-		u4Byte v6 = Array[i+5];
+		u32 v1 = Array[i];
+		u32 v2 = Array[i+1];
+		u32 v3 = Array[i+2];
+		u32 v4 = Array[i+3];
+		u32 v5 = Array[i+4];
+		u32 v6 = Array[i+5];
 
 	    odm_ConfigBB_PHY_REG_PG_8814A(pDM_Odm, v1, v2, v3, v4, v5, v6);
 
@@ -4307,187 +4301,7 @@ ODM_ReadAndConfig_MP_8814A_PHY_REG_PG_Type3(
 #endif
 	}
 }
-
-
-
-/******************************************************************************
-*                           PHY_REG_PG_Type5.TXT
-******************************************************************************/
-
-u4Byte Array_MP_8814A_PHY_REG_PG_Type5[] = { 
-	0, 0, 0, 0x00000c20, 0xffffffff, 0x48484848,
-	0, 0, 0, 0x00000c24, 0xffffffff, 0x46464646,
-	0, 0, 0, 0x00000c28, 0xffffffff, 0x44464646,
-	0, 0, 0, 0x00000c2c, 0xffffffff, 0x46464646,
-	0, 0, 0, 0x00000c30, 0xffffffff, 0x42444646,
-	0, 0, 1, 0x00000c34, 0xffffffff, 0x44444444,
-	0, 0, 1, 0x00000c38, 0xffffffff, 0x40424444,
-	0, 0, 2, 0x00000cd8, 0xffffffff, 0x42424242,
-	0, 0, 2, 0x00000cdc, 0xffffffff, 0x38404242,
-	0, 0, 0, 0x00000c3c, 0xffffffff, 0x46464646,
-	0, 0, 0, 0x00000c40, 0xffffffff, 0x42444646,
-	0, 0, 0, 0x00000c44, 0xffffffff, 0x44444040,
-	0, 0, 1, 0x00000c48, 0xffffffff, 0x44444444,
-	0, 0, 1, 0x00000c4c, 0xffffffff, 0x38384042,
-	0, 0, 2, 0x00000ce0, 0xffffffff, 0x42424242,
-	0, 0, 2, 0x00000ce4, 0xffffffff, 0x38404242,
-	0, 0, 2, 0x00000ce8, 0x0000ffff, 0x20203636,
-	0, 1, 0, 0x00000e20, 0xffffffff, 0x48484848,
-	0, 1, 0, 0x00000e24, 0xffffffff, 0x46464646,
-	0, 1, 0, 0x00000e28, 0xffffffff, 0x44464646,
-	0, 1, 0, 0x00000e2c, 0xffffffff, 0x46464646,
-	0, 1, 0, 0x00000e30, 0xffffffff, 0x42444646,
-	0, 1, 1, 0x00000e34, 0xffffffff, 0x44444444,
-	0, 1, 1, 0x00000e38, 0xffffffff, 0x40424444,
-	0, 1, 2, 0x00000ed8, 0xffffffff, 0x42424242,
-	0, 1, 2, 0x00000edc, 0xffffffff, 0x38404242,
-	0, 1, 0, 0x00000e3c, 0xffffffff, 0x46464646,
-	0, 1, 0, 0x00000e40, 0xffffffff, 0x42444646,
-	0, 1, 0, 0x00000e44, 0xffffffff, 0x44444040,
-	0, 1, 1, 0x00000e48, 0xffffffff, 0x44444444,
-	0, 1, 1, 0x00000e4c, 0xffffffff, 0x38384042,
-	0, 1, 2, 0x00000ee0, 0xffffffff, 0x42424242,
-	0, 1, 2, 0x00000ee4, 0xffffffff, 0x38404242,
-	0, 1, 2, 0x00000ee8, 0x0000ffff, 0x20203636,
-	0, 2, 0, 0x00001820, 0xffffffff, 0x48484848,
-	0, 2, 0, 0x00001824, 0xffffffff, 0x46464646,
-	0, 2, 0, 0x00001828, 0xffffffff, 0x44464646,
-	0, 2, 0, 0x0000182c, 0xffffffff, 0x46464646,
-	0, 2, 0, 0x00001830, 0xffffffff, 0x42444646,
-	0, 2, 1, 0x00001834, 0xffffffff, 0x44444444,
-	0, 2, 1, 0x00001838, 0xffffffff, 0x40424444,
-	0, 2, 2, 0x000018d8, 0xffffffff, 0x42424242,
-	0, 2, 2, 0x000018dc, 0xffffffff, 0x38404242,
-	0, 2, 0, 0x0000183c, 0xffffffff, 0x46464646,
-	0, 2, 0, 0x00001840, 0xffffffff, 0x42444646,
-	0, 2, 0, 0x00001844, 0xffffffff, 0x44444040,
-	0, 2, 1, 0x00001848, 0xffffffff, 0x44444444,
-	0, 2, 1, 0x0000184c, 0xffffffff, 0x38384042,
-	0, 2, 2, 0x000018e0, 0xffffffff, 0x42424242,
-	0, 2, 2, 0x000018e4, 0xffffffff, 0x38404242,
-	0, 2, 2, 0x000018e8, 0x0000ffff, 0x20203636,
-	0, 3, 0, 0x00001a20, 0xffffffff, 0x48484848,
-	0, 3, 0, 0x00001a24, 0xffffffff, 0x46464646,
-	0, 3, 0, 0x00001a28, 0xffffffff, 0x44464646,
-	0, 3, 0, 0x00001a2c, 0xffffffff, 0x46464646,
-	0, 3, 0, 0x00001a30, 0xffffffff, 0x42444646,
-	0, 3, 1, 0x00001a34, 0xffffffff, 0x44444444,
-	0, 3, 1, 0x00001a38, 0xffffffff, 0x40424444,
-	0, 3, 2, 0x00001ad8, 0xffffffff, 0x42424242,
-	0, 3, 2, 0x00001adc, 0xffffffff, 0x38404242,
-	0, 3, 0, 0x00001a3c, 0xffffffff, 0x46464646,
-	0, 3, 0, 0x00001a40, 0xffffffff, 0x42444646,
-	0, 3, 0, 0x00001a44, 0xffffffff, 0x44444040,
-	0, 3, 1, 0x00001a48, 0xffffffff, 0x44444444,
-	0, 3, 1, 0x00001a4c, 0xffffffff, 0x38384042,
-	0, 3, 2, 0x00001ae0, 0xffffffff, 0x42424242,
-	0, 3, 2, 0x00001ae4, 0xffffffff, 0x38404242,
-	0, 3, 2, 0x00001ae8, 0x0000ffff, 0x20203636,
-	1, 0, 0, 0x00000c24, 0xffffffff, 0x46464646,
-	1, 0, 0, 0x00000c28, 0xffffffff, 0x44464646,
-	1, 0, 0, 0x00000c2c, 0xffffffff, 0x46464646,
-	1, 0, 0, 0x00000c30, 0xffffffff, 0x42444646,
-	1, 0, 1, 0x00000c34, 0xffffffff, 0x44444444,
-	1, 0, 1, 0x00000c38, 0xffffffff, 0x40424444,
-	1, 0, 2, 0x00000cd8, 0xffffffff, 0x42424242,
-	1, 0, 2, 0x00000cdc, 0xffffffff, 0x38404242,
-	1, 0, 0, 0x00000c3c, 0xffffffff, 0x46464646,
-	1, 0, 0, 0x00000c40, 0xffffffff, 0x42444646,
-	1, 0, 0, 0x00000c44, 0xffffffff, 0x44443840,
-	1, 0, 1, 0x00000c48, 0xffffffff, 0x44444444,
-	1, 0, 1, 0x00000c4c, 0xffffffff, 0x36384042,
-	1, 0, 2, 0x00000ce0, 0xffffffff, 0x42424242,
-	1, 0, 2, 0x00000ce4, 0xffffffff, 0x38404242,
-	1, 0, 2, 0x00000ce8, 0x0000ffff, 0x20203436,
-	1, 1, 0, 0x00000e24, 0xffffffff, 0x46464646,
-	1, 1, 0, 0x00000e28, 0xffffffff, 0x44464646,
-	1, 1, 0, 0x00000e2c, 0xffffffff, 0x46464646,
-	1, 1, 0, 0x00000e30, 0xffffffff, 0x42444646,
-	1, 1, 1, 0x00000e34, 0xffffffff, 0x44444444,
-	1, 1, 1, 0x00000e38, 0xffffffff, 0x40424444,
-	1, 1, 2, 0x00000ed8, 0xffffffff, 0x42424242,
-	1, 1, 2, 0x00000edc, 0xffffffff, 0x38404242,
-	1, 1, 0, 0x00000e3c, 0xffffffff, 0x46464646,
-	1, 1, 0, 0x00000e40, 0xffffffff, 0x42444646,
-	1, 1, 0, 0x00000e44, 0xffffffff, 0x44443840,
-	1, 1, 1, 0x00000e48, 0xffffffff, 0x44444444,
-	1, 1, 1, 0x00000e4c, 0xffffffff, 0x36384042,
-	1, 1, 2, 0x00000ee0, 0xffffffff, 0x42424242,
-	1, 1, 2, 0x00000ee4, 0xffffffff, 0x38404242,
-	1, 1, 2, 0x00000ee8, 0x0000ffff, 0x20203436,
-	1, 2, 0, 0x00001824, 0xffffffff, 0x46464646,
-	1, 2, 0, 0x00001828, 0xffffffff, 0x44464646,
-	1, 2, 0, 0x0000182c, 0xffffffff, 0x46464646,
-	1, 2, 0, 0x00001830, 0xffffffff, 0x42444646,
-	1, 2, 1, 0x00001834, 0xffffffff, 0x44444444,
-	1, 2, 1, 0x00001838, 0xffffffff, 0x40424444,
-	1, 2, 2, 0x000018d8, 0xffffffff, 0x42424242,
-	1, 2, 2, 0x000018dc, 0xffffffff, 0x38404242,
-	1, 2, 0, 0x0000183c, 0xffffffff, 0x46464646,
-	1, 2, 0, 0x00001840, 0xffffffff, 0x42444646,
-	1, 2, 0, 0x00001844, 0xffffffff, 0x44443840,
-	1, 2, 1, 0x00001848, 0xffffffff, 0x44444444,
-	1, 2, 1, 0x0000184c, 0xffffffff, 0x36384042,
-	1, 2, 2, 0x000018e0, 0xffffffff, 0x42424242,
-	1, 2, 2, 0x000018e4, 0xffffffff, 0x38404242,
-	1, 2, 2, 0x000018e8, 0x0000ffff, 0x20203436,
-	1, 3, 0, 0x00001a24, 0xffffffff, 0x46464646,
-	1, 3, 0, 0x00001a28, 0xffffffff, 0x44464646,
-	1, 3, 0, 0x00001a2c, 0xffffffff, 0x46464646,
-	1, 3, 0, 0x00001a30, 0xffffffff, 0x42444646,
-	1, 3, 1, 0x00001a34, 0xffffffff, 0x44444444,
-	1, 3, 1, 0x00001a38, 0xffffffff, 0x40424444,
-	1, 3, 2, 0x00001ad8, 0xffffffff, 0x42424242,
-	1, 3, 2, 0x00001adc, 0xffffffff, 0x38404242,
-	1, 3, 0, 0x00001a3c, 0xffffffff, 0x46464646,
-	1, 3, 0, 0x00001a40, 0xffffffff, 0x42444646,
-	1, 3, 0, 0x00001a44, 0xffffffff, 0x44443840,
-	1, 3, 1, 0x00001a48, 0xffffffff, 0x44444444,
-	1, 3, 1, 0x00001a4c, 0xffffffff, 0x36384042,
-	1, 3, 2, 0x00001ae0, 0xffffffff, 0x42424242,
-	1, 3, 2, 0x00001ae4, 0xffffffff, 0x38404242,
-	1, 3, 2, 0x00001ae8, 0x0000ffff, 0x20203436
-};
-
-void
-ODM_ReadAndConfig_MP_8814A_PHY_REG_PG_Type5(
-	IN   PDM_ODM_T  pDM_Odm
-)
-{
-	u4Byte     i         = 0;
-	u4Byte     ArrayLen    = sizeof(Array_MP_8814A_PHY_REG_PG_Type5)/sizeof(u4Byte);
-	pu4Byte    Array       = Array_MP_8814A_PHY_REG_PG_Type5;
-
-#if (DM_ODM_SUPPORT_TYPE == ODM_WIN)
-	PADAPTER		Adapter = pDM_Odm->Adapter;
-	HAL_DATA_TYPE	*pHalData = GET_HAL_DATA(Adapter);
-
-	PlatformZeroMemory(pHalData->BufOfLinesPwrByRate, MAX_LINES_HWCONFIG_TXT*MAX_BYTES_LINE_HWCONFIG_TXT);
-	pHalData->nLinesReadPwrByRate = ArrayLen/6;
-#endif
-
-	ODM_RT_TRACE(pDM_Odm, ODM_COMP_INIT, ODM_DBG_LOUD, ("===> ODM_ReadAndConfig_MP_8814A_PHY_REG_PG_Type5\n"));
-
-	pDM_Odm->PhyRegPgVersion = 1;
-	pDM_Odm->PhyRegPgValueType = PHY_REG_PG_RELATIVE_VALUE;
-
-	for (i = 0; i < ArrayLen; i += 6) {
-		u4Byte v1 = Array[i];
-		u4Byte v2 = Array[i+1];
-		u4Byte v3 = Array[i+2];
-		u4Byte v4 = Array[i+3];
-		u4Byte v5 = Array[i+4];
-		u4Byte v6 = Array[i+5];
-
-	    odm_ConfigBB_PHY_REG_PG_8814A(pDM_Odm, v1, v2, v3, v4, v5, v6);
-
-#if (DM_ODM_SUPPORT_TYPE == ODM_WIN)
-	rsprintf((char *)pHalData->BufOfLinesPwrByRate[i/6], 100, "%s, %s, %s, 0x%X, 0x%08X, 0x%08X,",
-		(v1 == 0?"2.4G":"  5G"), (v2 == 0?"A":"B"), (v3 == 0?"1Tx":"2Tx"), v4, v5, v6);
-#endif
-	}
-}
-
+*/
 
 
 #endif /* end of HWIMG_SUPPORT*/

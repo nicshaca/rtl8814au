@@ -34,7 +34,7 @@ void rtl8814_sreset_xmit_status_check(_adapter *padapter)
 	u32 txdma_status;
 	
 	if( (txdma_status=rtw_read32(padapter, REG_TXDMA_STATUS)) !=0x00){
-		DBG_871X("%s REG_TXDMA_STATUS:0x%08x\n", __FUNCTION__, txdma_status);
+		RTW_INFO("%s REG_TXDMA_STATUS:0x%08x\n", __FUNCTION__, txdma_status);
 		rtw_hal_sreset_reset(padapter);
 	}
 #ifdef CONFIG_USB_HCI
@@ -59,7 +59,7 @@ void rtl8814_sreset_xmit_status_check(_adapter *padapter)
 					//padapter->Wifi_Error_Status = WIFI_TX_HANG;
 					ability = rtw_phydm_ability_get(padapter);
 
-					DBG_871X("%s tx hang %s\n", __FUNCTION__,
+					RTW_INFO("%s tx hang %s\n", __FUNCTION__,
 						(ability & ODM_BB_ADAPTIVITY)? "ODM_BB_ADAPTIVITY" : "");
 
 					if (!(ability & ODM_BB_ADAPTIVITY))
@@ -85,7 +85,7 @@ void rtl8814_sreset_linked_status_check(_adapter *padapter)
 	u32 rx_dma_status = 0;
 	rx_dma_status = rtw_read32(padapter,REG_RXDMA_STATUS);
 	if(rx_dma_status!= 0x00){
-		DBG_8192C("%s REG_RXDMA_STATUS:0x%08x\n",__FUNCTION__,rx_dma_status);
+		RTW_INFO("%s REG_RXDMA_STATUS:0x%08x\n",__FUNCTION__,rx_dma_status);
 	}	
 #if 0
 	u32 regc50,regc58,reg824,reg800;

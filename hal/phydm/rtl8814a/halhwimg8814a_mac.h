@@ -29,10 +29,10 @@
 ******************************************************************************/
 
 void
-ODM_ReadAndConfig_MP_8814A_MAC_REG(/* TC: Test Chip, MP: MP Chip*/
-	IN   PDM_ODM_T  pDM_Odm
+odm_read_and_config_mp_8814a_mac_reg(/* TC: Test Chip, MP: MP Chip*/
+	struct dm_struct    *pDM_Odm
 );
-u4Byte ODM_GetVersion_MP_8814A_MAC_REG(void);
+u4Byte odm_get_version_mp_8814a_mac_reg(void);
 
 #endif
 #endif /* end of HWIMG_SUPPORT*/

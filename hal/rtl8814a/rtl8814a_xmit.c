@@ -22,46 +22,6 @@
 //#include <drv_types.h>
 #include <rtl8814a_hal.h>
 
-void _dbg_dump_tx_info(_adapter	*padapter,int frame_tag, u8 *ptxdesc)
-{
-	u8 bDumpTxPkt;
-	u8 bDumpTxDesc = _FALSE;
-	rtw_hal_get_def_var(padapter, HAL_DEF_DBG_DUMP_TXPKT, &(bDumpTxPkt));
-
-	if(bDumpTxPkt ==1){//dump txdesc for data frame
-		DBG_871X("dump tx_desc for data frame\n");
-		if((frame_tag&0x0f) == DATA_FRAMETAG){	
-			bDumpTxDesc = _TRUE;		
-		}
-	}	
-	else if(bDumpTxPkt ==2){//dump txdesc for mgnt frame
-		DBG_871X("dump tx_desc for mgnt frame\n");
-		if((frame_tag&0x0f) == MGNT_FRAMETAG){	
-			bDumpTxDesc = _TRUE;		
-		}
-	}	
-	else if(bDumpTxPkt ==3){//dump early info
-	}
-	
-	if(bDumpTxDesc){
-		//	ptxdesc->txdw4 = cpu_to_le32(0x00001006);//RTS Rate=24M
-		//	ptxdesc->txdw6 = 0x6666f800;
-		DBG_8192C("=====================================\n");
-		DBG_8192C("Offset00(0x%08x)\n",*((u32 *)(ptxdesc)));
-		DBG_8192C("Offset04(0x%08x)\n",*((u32 *)(ptxdesc+4)));
-		DBG_8192C("Offset08(0x%08x)\n",*((u32 *)(ptxdesc+8)));
-		DBG_8192C("Offset12(0x%08x)\n",*((u32 *)(ptxdesc+12)));
-		DBG_8192C("Offset16(0x%08x)\n",*((u32 *)(ptxdesc+16)));
-		DBG_8192C("Offset20(0x%08x)\n",*((u32 *)(ptxdesc+20)));
-		DBG_8192C("Offset24(0x%08x)\n",*((u32 *)(ptxdesc+24)));
-		DBG_8192C("Offset28(0x%08x)\n",*((u32 *)(ptxdesc+28)));
-		DBG_8192C("Offset32(0x%08x)\n",*((u32 *)(ptxdesc+32)));
-		DBG_8192C("Offset36(0x%08x)\n",*((u32 *)(ptxdesc+36)));
-		DBG_8192C("=====================================\n");
-	}
-
-}
-
 /*
  * Description:
  *	Aggregation packets and send to hardware
@@ -106,9 +66,9 @@ InsertEMContent_8814(
 	#ifdef DBG_EMINFO
 	{
 		int i;
-		DBG_8192C("\n%s ==> pEMInfo->EMPktNum =%d\n",__FUNCTION__,pEMInfo->EMPktNum);
+		RTW_INFO("\n%s ==> pEMInfo->EMPktNum =%d\n",__FUNCTION__,pEMInfo->EMPktNum);
 		for(i=0;i< EARLY_MODE_MAX_PKT_NUM;i++){
-			DBG_8192C("%s ==> pEMInfo->EMPktLen[%d] =%d\n",__FUNCTION__,i,pEMInfo->EMPktLen[i]);
+			RTW_INFO("%s ==> pEMInfo->EMPktLen[%d] =%d\n",__FUNCTION__,i,pEMInfo->EMPktLen[i]);
 		}
 
 	}
@@ -188,12 +148,12 @@ void UpdateEarlyModeInfo8814(struct xmit_priv *pxmitpriv,struct xmit_buf *pxmitb
 	pmem= pframe->buf_addr;	
 	
 	#ifdef DBG_EMINFO			
-	DBG_871X("\n%s ==> agg_num:%d\n",__FUNCTION__, pframe->agg_num);
+	RTW_INFO("\n%s ==> agg_num:%d\n",__FUNCTION__, pframe->agg_num);
 	for(index=0;index<pframe->agg_num;index++){
 		offset = 	pxmitpriv->agg_pkt[index].offset;
 		pktlen = pxmitpriv->agg_pkt[index].pkt_len;
-		DBG_871X("%s ==> agg_pkt[%d].offset=%d\n",__FUNCTION__,index,offset);
-		DBG_871X("%s ==> agg_pkt[%d].pkt_len=%d\n",__FUNCTION__,index,pktlen);
+		RTW_INFO("%s ==> agg_pkt[%d].offset=%d\n",__FUNCTION__,index,offset);
+		RTW_INFO("%s ==> agg_pkt[%d].pkt_len=%d\n",__FUNCTION__,index,pktlen);
 	}
 	#endif
 	
@@ -238,7 +198,7 @@ void UpdateEarlyModeInfo8814(struct xmit_priv *pxmitpriv,struct xmit_buf *pxmitb
 			}
 			
 			#ifdef DBG_EMINFO
-			DBG_871X("%s ==> desc.pkt_len=%d\n",__FUNCTION__,ptxdesc->pktlen);
+			RTW_INFO("%s ==> desc.pkt_len=%d\n",__FUNCTION__,ptxdesc->pktlen);
 			#endif
 			InsertEMContent_8814(&eminfo,pEMInfo_mem);
 		}	
@@ -405,7 +365,7 @@ void rtl8814a_fill_txdesc_vcs(PADAPTER padapter, struct pkt_attrib *pattrib, u8 
 	struct mlme_ext_priv	*pmlmeext = &padapter->mlmeextpriv;
 	struct mlme_ext_info	*pmlmeinfo = &(pmlmeext->mlmext_info);
 
-	//DBG_8192C("vcs_mode=%d\n", pattrib->vcs_mode);	
+	//RTW_INFO("vcs_mode=%d\n", pattrib->vcs_mode);	
 
 	if (pattrib->vcs_mode) {
 
@@ -442,9 +402,9 @@ BWMapping_8814(
 	u8	BWSettingOfDesc = 0;
 	PHAL_DATA_TYPE	pHalData = GET_HAL_DATA(Adapter);
 
-	//DBG_871X("BWMapping pHalData->CurrentChannelBW %d, pattrib->bwmode %d \n",pHalData->CurrentChannelBW,pattrib->bwmode);
+	//RTW_INFO("BWMapping pHalData->current_channel_bw %d, pattrib->bwmode %d \n",pHalData->current_channel_bw,pattrib->bwmode);
 
-	if(pHalData->CurrentChannelBW== CHANNEL_WIDTH_80)
+	if(pHalData->current_channel_bw== CHANNEL_WIDTH_80)
 	{
 		if(pattrib->bwmode == CHANNEL_WIDTH_80)
 			BWSettingOfDesc= 2;
@@ -453,7 +413,7 @@ BWMapping_8814(
 		else
 			BWSettingOfDesc = 0;
 	}
-	else if(pHalData->CurrentChannelBW== CHANNEL_WIDTH_40)
+	else if(pHalData->current_channel_bw== CHANNEL_WIDTH_40)
 	{
 		if((pattrib->bwmode == CHANNEL_WIDTH_40) || (pattrib->bwmode == CHANNEL_WIDTH_80))
 			BWSettingOfDesc = 1;
@@ -474,9 +434,9 @@ SCMapping_8814(
 {
 	u8	SCSettingOfDesc = 0;
 	PHAL_DATA_TYPE	pHalData = GET_HAL_DATA(Adapter);
-	//DBG_871X("SCMapping: pHalData->CurrentChannelBW %d, pHalData->nCur80MhzPrimeSC %d, pHalData->nCur40MhzPrimeSC %d \n",pHalData->CurrentChannelBW,pHalData->nCur80MhzPrimeSC,pHalData->nCur40MhzPrimeSC);
+	//RTW_INFO("SCMapping: pHalData->current_channel_bw %d, pHalData->nCur80MhzPrimeSC %d, pHalData->nCur40MhzPrimeSC %d \n",pHalData->current_channel_bw,pHalData->nCur80MhzPrimeSC,pHalData->nCur40MhzPrimeSC);
 	
-	if(pHalData->CurrentChannelBW == CHANNEL_WIDTH_80)
+	if(pHalData->current_channel_bw == CHANNEL_WIDTH_80)
 	{
 		if(pattrib->bwmode == CHANNEL_WIDTH_80)
 		{
@@ -489,7 +449,7 @@ SCMapping_8814(
 			else if(pHalData->nCur80MhzPrimeSC == HAL_PRIME_CHNL_OFFSET_UPPER)
 				SCSettingOfDesc = VHT_DATA_SC_40_UPPER_OF_80MHZ;
 			else
-				DBG_871X("SCMapping: DONOT CARE Mode Setting\n");
+				RTW_INFO("SCMapping: DONOT CARE Mode Setting\n");
 		}
 		else
 		{
@@ -502,12 +462,12 @@ SCMapping_8814(
 			else if((pHalData->nCur40MhzPrimeSC == HAL_PRIME_CHNL_OFFSET_UPPER) && (pHalData->nCur80MhzPrimeSC == HAL_PRIME_CHNL_OFFSET_UPPER))
 				SCSettingOfDesc = VHT_DATA_SC_20_UPPERST_OF_80MHZ;
 			else
-				DBG_871X("SCMapping: DONOT CARE Mode Setting\n");
+				RTW_INFO("SCMapping: DONOT CARE Mode Setting\n");
 		}
 	}
-	else if(pHalData->CurrentChannelBW== CHANNEL_WIDTH_40)
+	else if(pHalData->current_channel_bw== CHANNEL_WIDTH_40)
 	{
-		//DBG_871X("SCMapping: HT Case: pHalData->CurrentChannelBW %d, pHalData->nCur40MhzPrimeSC %d \n",pHalData->CurrentChannelBW,pHalData->nCur40MhzPrimeSC);
+		//RTW_INFO("SCMapping: HT Case: pHalData->current_channel_bw %d, pHalData->nCur40MhzPrimeSC %d \n",pHalData->current_channel_bw,pHalData->nCur40MhzPrimeSC);
 
 		if(pattrib->bwmode == CHANNEL_WIDTH_40)
 		{
@@ -541,7 +501,7 @@ SCMapping_8814(
 
 void rtl8814a_fill_txdesc_phy(PADAPTER padapter, struct pkt_attrib *pattrib, u8 *ptxdesc)
 {
-	//DBG_8192C("bwmode=%d, ch_off=%d\n", pattrib->bwmode, pattrib->ch_offset);
+	//RTW_INFO("bwmode=%d, ch_off=%d\n", pattrib->bwmode, pattrib->ch_offset);
 
 	if(pattrib->ht_en)
 	{
